@@ -8,9 +8,15 @@ const jwt = require("jsonwebtoken");
 
 const app = express();
 
-// CORS permettendo le richieste dal frontend
+// Variabili d'ambiente
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const JWT_SECRET = process.env.JWT_SECRET || "devsecret";
+const ADMIN_USER = process.env.ADMIN_USER || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "barbiere123";
+
+// Middleware
 app.use(cors({
-  origin: "https://barbiere-app.onrender.com", // cambia con il tuo dominio in produzione
+  origin: FRONTEND_URL,
   credentials: true,
 }));
 app.use(express.json());
@@ -21,14 +27,16 @@ const CLOSE_MORNING = 13;
 const OPEN_AFTERNOON = 14;
 const CLOSE_AFTERNOON = 20;
 
+// Prenotazioni in memoria (per test / sviluppo)
 let reservations = [];
 
-const JWT_SECRET = "supersecretkey123";
+// Hash password admin
 const adminUser = {
-  username: "admin",
-  passwordHash: bcrypt.hashSync("barbiere123", 10)
+  username: ADMIN_USER,
+  passwordHash: bcrypt.hashSync(ADMIN_PASSWORD, 10)
 };
 
+// Genera slot disponibili
 function generateSlots() {
   let slots = [];
   for (let h = OPEN_MORNING; h < CLOSE_MORNING; h++) {
@@ -98,7 +106,7 @@ app.get("/export-reservations", authenticateToken, (req, res) => {
   const ws = XLSX.utils.json_to_sheet(reservations);
   XLSX.utils.book_append_sheet(wb, ws, "Prenotazioni");
 
-  const filePath = path.join(__dirname, "prenotazioni.xlsx");
+  const filePath = path.join(__dirname, `prenotazioni_${Date.now()}.xlsx`);
   XLSX.writeFile(wb, filePath);
 
   res.download(filePath, "prenotazioni.xlsx", err => {
@@ -109,4 +117,4 @@ app.get("/export-reservations", authenticateToken, (req, res) => {
 
 // Avvio server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server avviato sulla porta " + PORT));
+app.listen(PORT, () => console.log(`Server avviato sulla porta ${PORT}`));

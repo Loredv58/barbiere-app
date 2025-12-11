@@ -24,3 +24,16 @@ frontend è il server
 server.js
 
 backend è il client
+
+ogni volta che si modifica qualcosa nella cartella barbiere-app per fare l'aggiornamento su githhub e poi automaticamente su Render fare i seguenti passaggi:
+
+1) apri cmd da barbiere-app
+
+2) esegui questo codice (Aggiorna il repository locale con Git):
+git add .
+git commit -m "Descrizione modifiche"
+
+3) git push origin main (Invia le modifiche su GitHub)
+
+e poi Render fa il deploy automatico non appena GitHub riceve il push
+
