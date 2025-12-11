@@ -8,13 +8,16 @@ function ReservationForm({ selectedSlot, onReservationDone }) {
     phone: "",
   });
 
+  // URL backend dal .env
+  const apiUrl = process.env.REACT_APP_API_URL;
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch("http://localhost:5000/reserve", {
+    fetch(`${apiUrl}/reserve`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...form, time: selectedSlot }),
@@ -42,4 +45,3 @@ function ReservationForm({ selectedSlot, onReservationDone }) {
 }
 
 export default ReservationForm;
-

@@ -3,12 +3,15 @@ import React, { useEffect, useState } from "react";
 function SlotsList({ onSelectSlot }) {
   const [slots, setSlots] = useState([]);
 
+  // URL backend dal .env
+  const apiUrl = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
-    fetch("http://localhost:5000/slots")
+    fetch(`${apiUrl}/slots`)
       .then((res) => res.json())
       .then((data) => setSlots(data))
       .catch((err) => console.error(err));
-  }, []);
+  }, [apiUrl]);
 
   return (
     <div>

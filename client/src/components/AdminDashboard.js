@@ -5,10 +5,13 @@ function AdminDashboard({ onLogout }) {
   const [error, setError] = useState("");
   const token = localStorage.getItem("adminToken");
 
+  // URL backend dal .env
+  const apiUrl = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     if (!token) return;
 
-    fetch("http://localhost:5000/reservations", {
+    fetch(`${apiUrl}/reservations`, {
       headers: { Authorization: "Bearer " + token },
     })
       .then((res) => {
@@ -21,7 +24,7 @@ function AdminDashboard({ onLogout }) {
         setError("Token mancante o scaduto. Effettua il login di nuovo.");
         setReservations([]);
       });
-  }, [token]);
+  }, [token, apiUrl]);
 
   const handleDownload = async () => {
     if (!token) {
@@ -31,7 +34,7 @@ function AdminDashboard({ onLogout }) {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/export-reservations", {
+      const res = await fetch(`${apiUrl}/export-reservations`, {
         headers: { Authorization: "Bearer " + token },
       });
 
@@ -111,4 +114,3 @@ function AdminDashboard({ onLogout }) {
 }
 
 export default AdminDashboard;
-
