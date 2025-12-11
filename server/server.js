@@ -10,7 +10,7 @@ const app = express();
 
 // CORS permettendo le richieste dal frontend
 app.use(cors({
-  origin: "http://localhost:3000", // cambia con il tuo dominio in produzione
+  origin: "https://barbiere-app.onrender.com", // cambia con il tuo dominio in produzione
   credentials: true,
 }));
 app.use(express.json());

@@ -7,3 +7,20 @@ Per avviare lato client vai nella cartella client, fai CMD  e scrivi npm start e
 
 Login proprietario
 per fare login proprietario username: admin password: barbiere123
+
+git init
+git add .
+git commit -m "Primo upload barbiere app"
+git branch -M main
+git remote add origin https://github.com/Loredv58/barbiere-app.git
+git push -u origin main
+
+
+git config --global user.name "Lorenzo"
+git config --global user.email "dellavolpelorenzo@gmail.com"
+
+
+frontend è il server
+server.js
+
+backend è il client
