@@ -1,42 +1,34 @@
 const express = require("express");
 const cors = require("cors");
-const XLSX = require("xlsx");
-const path = require("path");
-const fs = require("fs");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { Pool } = require("pg");
 
 const app = express();
 
-// Variabili d'ambiente
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
-const JWT_SECRET = process.env.JWT_SECRET || "devsecret";
-const ADMIN_USER = process.env.ADMIN_USER || "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "barbiere123";
-
-// Middleware
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: process.env.FRONTEND_URL,
   credentials: true,
 }));
 app.use(express.json());
 
-// Orari
+// Config DB
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false } // NECESSARIO SU RENDER
+});
+
+// Costanti orari
 const OPEN_MORNING = 8;
 const CLOSE_MORNING = 13;
 const OPEN_AFTERNOON = 14;
 const CLOSE_AFTERNOON = 20;
 
-// Prenotazioni in memoria (per test / sviluppo)
-let reservations = [];
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_USER = process.env.ADMIN_USER;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-// Hash password admin
-const adminUser = {
-  username: ADMIN_USER,
-  passwordHash: bcrypt.hashSync(ADMIN_PASSWORD, 10)
-};
-
-// Genera slot disponibili
+// Genera gli slot orari
 function generateSlots() {
   let slots = [];
   for (let h = OPEN_MORNING; h < CLOSE_MORNING; h++) {
@@ -48,30 +40,66 @@ function generateSlots() {
   return slots;
 }
 
-// Rotte pubbliche
-app.get("/slots", (req, res) => {
-  const available = generateSlots().filter(
-    (slot) => !reservations.find(r => r.time === slot)
-  );
-  res.json(available);
+// Crea tabella prenotazioni se non esiste
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reservations (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      surname TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      time TEXT NOT NULL UNIQUE
+    );
+  `);
+}
+initDB();
+
+// Rotta slot disponibili
+app.get("/slots", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT time FROM reservations");
+    const booked = result.rows.map(r => r.time);
+
+    const available = generateSlots().filter(slot => !booked.includes(slot));
+
+    res.json(available);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore server" });
+  }
 });
 
-app.post("/reserve", (req, res) => {
+// Prenotazione cliente
+app.post("/reserve", async (req, res) => {
   const { name, surname, email, phone, time } = req.body;
-  if (!name || !surname || !email || !phone || !time) {
+
+  if (!name || !surname || !email || !phone || !time)
     return res.status(400).json({ message: "Dati mancanti" });
+
+  try {
+    const existing = await pool.query("SELECT * FROM reservations WHERE time=$1", [time]);
+
+    if (existing.rows.length > 0)
+      return res.status(400).json({ message: "Slot già prenotato" });
+
+    await pool.query(
+      "INSERT INTO reservations (name, surname, email, phone, time) VALUES ($1, $2, $3, $4, $5)",
+      [name, surname, email, phone, time]
+    );
+
+    res.json({ message: "Prenotazione effettuata!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore server" });
   }
-  if (reservations.find(r => r.time === time)) {
-    return res.status(400).json({ message: "Slot già prenotato" });
-  }
-  reservations.push({ name, surname, email, phone, time });
-  res.json({ message: "Prenotazione effettuata con successo" });
 });
 
-// Middleware autenticazione JWT
+// Middleware autenticazione
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const header = req.headers["authorization"];
+  const token = header && header.split(" ")[1];
+
   if (!token) return res.status(401).json({ message: "Token mancante" });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -84,37 +112,25 @@ function authenticateToken(req, res, next) {
 // Login admin
 app.post("/admin/login", (req, res) => {
   const { username, password } = req.body;
-  if (username !== adminUser.username)
+
+  if (username !== ADMIN_USER)
     return res.status(401).json({ message: "Utente non trovato" });
 
-  if (!bcrypt.compareSync(password, adminUser.passwordHash))
+  if (password !== ADMIN_PASSWORD)
     return res.status(401).json({ message: "Password errata" });
 
   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
+
   res.json({ token });
 });
 
-// Rotte protette
-app.get("/reservations", authenticateToken, (req, res) => {
-  res.json(reservations);
-});
-
-app.get("/export-reservations", authenticateToken, (req, res) => {
-  if (reservations.length === 0) return res.status(400).send("Nessuna prenotazione");
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(reservations);
-  XLSX.utils.book_append_sheet(wb, ws, "Prenotazioni");
-
-  const filePath = path.join(__dirname, `prenotazioni_${Date.now()}.xlsx`);
-  XLSX.writeFile(wb, filePath);
-
-  res.download(filePath, "prenotazioni.xlsx", err => {
-    if (err) console.error(err);
-    fs.unlinkSync(filePath);
-  });
+// Lista prenotazioni admin
+app.get("/reservations", authenticateToken, async (req, res) => {
+  const result = await pool.query("SELECT * FROM reservations ORDER BY id DESC");
+  res.json(result.rows);
 });
 
 // Avvio server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server avviato sulla porta ${PORT}`));
+app.listen(PORT, () => console.log("Server avviato su porta " + PORT));
+
