@@ -1,28 +1,41 @@
 import React, { useEffect, useState } from "react";
 
-function SlotsList({ onSelectSlot }) {
+function SlotsList({ selectedDate, onSelectSlot }) {
   const [slots, setSlots] = useState([]);
 
-  // URL backend dal .env
   const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch(`${apiUrl}/slots`)
+    if (!selectedDate) return;
+
+    fetch(`${apiUrl}/slots?date=${selectedDate}`)
       .then((res) => res.json())
       .then((data) => setSlots(data))
       .catch((err) => console.error(err));
-  }, [apiUrl]);
+  }, [apiUrl, selectedDate]);
+
+  if (!selectedDate) {
+    return <p>Seleziona prima una data dal calendario</p>;
+  }
 
   return (
     <div>
-      <h2>Slot disponibili</h2>
-      <ul>
-        {slots.map((slot, index) => (
-          <li key={index}>
-            {slot} <button onClick={() => onSelectSlot(slot)}>Prenota</button>
-          </li>
-        ))}
-      </ul>
+      <h2>Slot disponibili per {selectedDate}</h2>
+
+      {slots.length === 0 ? (
+        <p>Nessuno slot disponibile</p>
+      ) : (
+        <ul>
+          {slots.map((slot, index) => (
+            <li key={index}>
+              {slot}{" "}
+              <button onClick={() => onSelectSlot(slot)}>
+                Prenota
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
