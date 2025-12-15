@@ -14,24 +14,45 @@ function ReservationForm({ selectedDate, selectedSlot, onReservationDone }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    fetch(`${apiUrl}/reserve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        date: selectedDate,
-        time: selectedSlot,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        alert(data.message);
-        onReservationDone();
-      })
-      .catch((err) => console.error(err));
+    if (!selectedDate || !selectedSlot) {
+      alert("Seleziona prima una data e uno slot.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiUrl}/reserve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          date: selectedDate,
+          time: selectedSlot,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Errore nella prenotazione");
+      }
+
+      alert(data.message);
+      onReservationDone();
+
+      // Reset form
+      setForm({
+        name: "",
+        surname: "",
+        email: "",
+        phone: "",
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Errore: " + err.message);
+    }
   };
 
   return (
@@ -44,12 +65,14 @@ function ReservationForm({ selectedDate, selectedSlot, onReservationDone }) {
         <input
           name="name"
           placeholder="Nome"
+          value={form.name}
           onChange={handleChange}
           required
         />
         <input
           name="surname"
           placeholder="Cognome"
+          value={form.surname}
           onChange={handleChange}
           required
         />
@@ -57,12 +80,14 @@ function ReservationForm({ selectedDate, selectedSlot, onReservationDone }) {
           name="email"
           type="email"
           placeholder="Email"
+          value={form.email}
           onChange={handleChange}
           required
         />
         <input
           name="phone"
           placeholder="Telefono"
+          value={form.phone}
           onChange={handleChange}
           required
         />
@@ -73,3 +98,4 @@ function ReservationForm({ selectedDate, selectedSlot, onReservationDone }) {
 }
 
 export default ReservationForm;
+

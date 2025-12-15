@@ -1,6 +1,6 @@
 import React from "react";
 
-function Calendar({ onSelectDate }) {
+function Calendar({ onDateSelect }) {
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth(); // mese corrente
@@ -12,7 +12,7 @@ function Calendar({ onSelectDate }) {
     const d = new Date(year, month, day);
     const weekday = d.getDay();
     if (day < startDay) return true;
-    if (weekday === 0 || weekday === 1) return true;
+    if (weekday === 0 || weekday === 1) return true; // domenica e lunedì
     return false;
   }
 
@@ -33,7 +33,7 @@ function Calendar({ onSelectDate }) {
                 opacity: disabled ? 0.3 : 1
               }}
               onClick={() =>
-                onSelectDate(
+                onDateSelect(
                   `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
                 )
               }
@@ -48,3 +48,4 @@ function Calendar({ onSelectDate }) {
 }
 
 export default Calendar;
+

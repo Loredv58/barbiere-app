@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 
 function SlotsList({ selectedDate, onSelectSlot }) {
   const [slots, setSlots] = useState([]);
-
   const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (!selectedDate) return;
 
+    // Fetch slot disponibili per la data selezionata
     fetch(`${apiUrl}/slots?date=${selectedDate}`)
       .then((res) => res.json())
       .then((data) => setSlots(data))
@@ -41,3 +41,4 @@ function SlotsList({ selectedDate, onSelectSlot }) {
 }
 
 export default SlotsList;
+
