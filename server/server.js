@@ -22,8 +22,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: false }
 });
+
 
 /* ---------------- INIT DB ---------------- */
 

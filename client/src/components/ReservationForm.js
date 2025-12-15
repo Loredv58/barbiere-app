@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function ReservationForm({ selectedSlot, onReservationDone }) {
+function ReservationForm({ selectedDate, selectedSlot, onReservationDone }) {
   const [form, setForm] = useState({
     name: "",
     surname: "",
@@ -8,7 +8,6 @@ function ReservationForm({ selectedSlot, onReservationDone }) {
     phone: "",
   });
 
-  // URL backend dal .env
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const handleChange = (e) => {
@@ -17,10 +16,15 @@ function ReservationForm({ selectedSlot, onReservationDone }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     fetch(`${apiUrl}/reserve`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, time: selectedSlot }),
+      body: JSON.stringify({
+        ...form,
+        date: selectedDate,
+        time: selectedSlot,
+      }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -32,12 +36,36 @@ function ReservationForm({ selectedSlot, onReservationDone }) {
 
   return (
     <div>
-      <h2>Prenota: {selectedSlot}</h2>
+      <h2>
+        Prenota il {selectedDate} alle {selectedSlot}
+      </h2>
+
       <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Nome" onChange={handleChange} required />
-        <input name="surname" placeholder="Cognome" onChange={handleChange} required />
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
-        <input name="phone" placeholder="Telefono" onChange={handleChange} required />
+        <input
+          name="name"
+          placeholder="Nome"
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="surname"
+          placeholder="Cognome"
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="phone"
+          placeholder="Telefono"
+          onChange={handleChange}
+          required
+        />
         <button type="submit">Conferma Prenotazione</button>
       </form>
     </div>
