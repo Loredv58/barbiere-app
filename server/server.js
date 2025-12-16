@@ -54,9 +54,12 @@ initDB();
 /* ---------------- UTILS ---------------- */
 
 function isWorkingDay(dateStr) {
-  const day = new Date(dateStr).getDay();
-  return day !== 0 && day !== 1; // domenica=0, lunedì=1
+  const [year, month, day] = dateStr.split("-");
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  const weekday = date.getDay();
+  return weekday !== 0 && weekday !== 1; // domenica, lunedì
 }
+
 
 function generateSlots() {
   const slots = [];
