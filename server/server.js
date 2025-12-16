@@ -164,6 +164,27 @@ app.get("/export-reservations", authenticateToken, async (req, res) => {
   });
 });
 
+app.get("/admin/reservations", async (req, res) => {
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ message: "Data mancante" });
+  }
+
+  const result = await pool.query(
+    `
+    SELECT *
+    FROM reservations
+    WHERE date = $1
+    ORDER BY time ASC
+    `,
+    [date]
+  );
+
+  res.json(result.rows);
+});
+
+
 /* ---------------- START ---------------- */
 
 const PORT = process.env.PORT || 5000;

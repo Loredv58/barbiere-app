@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from "react";
 
+function formatDate(dateString) {
+  return new Date(dateString).toLocaleDateString("it-IT");
+}
+
 function AdminDashboard({ onLogout }) {
   const [reservations, setReservations] = useState([]);
   const [error, setError] = useState("");
+  const [selectedDate, setSelectedDate] = useState(""); // Data selezionata
   const token = localStorage.getItem("adminToken");
 
   // URL backend dal .env
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // Carica le prenotazioni quando cambia la data o il token
   useEffect(() => {
-    if (!token) return;
+    if (!token || !selectedDate) return;
 
-    fetch(`${apiUrl}/reservations`, {
+    fetch(`${apiUrl}/admin/reservations?date=${selectedDate}`, {
       headers: { Authorization: "Bearer " + token },
     })
       .then((res) => {
@@ -24,7 +30,7 @@ function AdminDashboard({ onLogout }) {
         setError("Token mancante o scaduto. Effettua il login di nuovo.");
         setReservations([]);
       });
-  }, [token, apiUrl]);
+  }, [token, apiUrl, selectedDate]);
 
   const handleDownload = async () => {
     if (!token) {
@@ -59,12 +65,22 @@ function AdminDashboard({ onLogout }) {
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
+    setSelectedDate(""); // resetta la data selezionata
     onLogout();
   };
 
   return (
     <div style={{ marginTop: "20px" }}>
       <h2>Dashboard Proprietario</h2>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>Seleziona giorno: </label>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+        />
+      </div>
 
       <div style={{ marginBottom: "10px" }}>
         <button onClick={handleDownload}>Scarica Excel</button>
@@ -75,42 +91,46 @@ function AdminDashboard({ onLogout }) {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <table
-        border="1"
-        cellPadding="5"
-        style={{ borderCollapse: "collapse", marginTop: "10px" }}
-      >
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Cognome</th>
-            <th>Email</th>
-            <th>Telefono</th>
-            <th>Data</th>
-            <th>Orario</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.isArray(reservations) && reservations.length > 0 ? (
-            reservations.map((r, index) => (
-              <tr key={index}>
-                <td>{r.name}</td>
-                <td>{r.surname}</td>
-                <td>{r.email}</td>
-                <td>{r.phone}</td>
-                <td>{r.date}</td>
-                <td>{r.time}</td>
-              </tr>
-            ))
-          ) : (
+      {!selectedDate && <p>Seleziona un giorno dal calendario</p>}
+
+      {selectedDate && (
+        <table
+          border="1"
+          cellPadding="5"
+          style={{ borderCollapse: "collapse", marginTop: "10px" }}
+        >
+          <thead>
             <tr>
-              <td colSpan="6" style={{ textAlign: "center" }}>
-                Nessuna prenotazione disponibile
-              </td>
+              <th>Nome</th>
+              <th>Cognome</th>
+              <th>Email</th>
+              <th>Telefono</th>
+              <th>Data</th>
+              <th>Orario</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {Array.isArray(reservations) && reservations.length > 0 ? (
+              reservations.map((r, index) => (
+                <tr key={index}>
+                  <td>{r.name}</td>
+                  <td>{r.surname}</td>
+                  <td>{r.email}</td>
+                  <td>{r.phone}</td>
+                  <td>{formatDate(r.date)}</td>
+                  <td>{r.time}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" style={{ textAlign: "center" }}>
+                  Nessuna prenotazione disponibile
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
