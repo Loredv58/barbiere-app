@@ -19,7 +19,6 @@ function App() {
 
   const handleReservationDone = () => {
     setSelectedSlot(null);
-    setSelectedDate(null);
     setRefresh(!refresh);
   };
 
@@ -33,7 +32,7 @@ function App() {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: 20 }}>
       <h1>Barbiere - Prenotazioni</h1>
 
       {!showLogin && (
@@ -42,36 +41,25 @@ function App() {
 
       {showLogin ? (
         <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />
+      ) : selectedSlot ? (
+        <ReservationForm
+          selectedDate={selectedDate}
+          selectedSlot={selectedSlot}
+          onReservationDone={handleReservationDone}
+        />
       ) : (
-        <div>
-          {/* CALENDARIO */}
-          <Calendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+        <>
+          <Calendar onDateSelect={setSelectedDate} />
 
-          {/* Messaggio se non hai selezionato una data */}
-          {!selectedDate && <p>Seleziona prima una data dal calendario</p>}
-
-          {/* Slot disponibili */}
-          {selectedDate && !selectedSlot && (
-            <SlotsList
-              key={refresh}
-              selectedDate={selectedDate}
-              onSelectSlot={setSelectedSlot}
-            />
-          )}
-
-          {/* Form prenotazione */}
-          {selectedSlot && (
-            <ReservationForm
-              selectedDate={selectedDate}
-              selectedSlot={selectedSlot}
-              onReservationDone={handleReservationDone}
-            />
-          )}
-        </div>
+          <SlotsList
+            key={refresh}
+            selectedDate={selectedDate}
+            onSelectSlot={setSelectedSlot}
+          />
+        </>
       )}
     </div>
   );
 }
 
 export default App;
-
