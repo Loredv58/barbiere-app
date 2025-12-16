@@ -164,26 +164,33 @@ app.get("/export-reservations", authenticateToken, async (req, res) => {
   });
 });
 
+// Rotta per prenotazioni filtrate per data e ordinate per orario
 app.get("/admin/reservations", async (req, res) => {
-  const { date } = req.query;
+  const token = req.headers["authorization"]?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Token mancante" });
 
-  if (!date) {
-    return res.status(400).json({ message: "Data mancante" });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(403).json({ message: "Token non valido" });
   }
 
-  const result = await pool.query(
-    `
-    SELECT *
-    FROM reservations
-    WHERE date = $1
-    ORDER BY time ASC
-    `,
-    [date]
-  );
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ message: "Data mancante" });
 
-  res.json(result.rows);
+  try {
+    // Query al database: filtra per data e ordina per orario
+    const result = await pool.query(
+      "SELECT name, surname, email, phone, date, time FROM reservations WHERE date = $1 ORDER BY time ASC",
+      [date]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore nel recupero prenotazioni" });
+  }
 });
-
 
 /* ---------------- START ---------------- */
 
