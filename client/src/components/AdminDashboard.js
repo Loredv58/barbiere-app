@@ -86,6 +86,7 @@ function AdminDashboard({ onLogout }) {
             <th>Cognome</th>
             <th>Email</th>
             <th>Telefono</th>
+            <th>Data</th>
             <th>Orario</th>
           </tr>
         </thead>
@@ -97,12 +98,13 @@ function AdminDashboard({ onLogout }) {
                 <td>{r.surname}</td>
                 <td>{r.email}</td>
                 <td>{r.phone}</td>
+                <td>{r.date}</td>
                 <td>{r.time}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="5" style={{ textAlign: "center" }}>
+              <td colSpan="6" style={{ textAlign: "center" }}>
                 Nessuna prenotazione disponibile
               </td>
             </tr>

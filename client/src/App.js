@@ -22,10 +22,13 @@ function App() {
     setRefresh(!refresh);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    setIsAdminLogged(false);
-  };
+const handleLogout = () => {
+  localStorage.removeItem("adminToken");
+  setIsAdminLogged(false);
+  setShowLogin(false);
+  setSelectedSlot(null);
+};
+
 
   if (isAdminLogged) {
     return <AdminDashboard onLogout={handleLogout} />;
