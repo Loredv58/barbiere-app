@@ -11,7 +11,18 @@ function App() {
   const [refresh, setRefresh] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [isAdminLogged, setIsAdminLogged] = useState(false);
+  const [backendReady, setBackendReady] = useState(false);
 
+  const apiUrl = process.env.REACT_APP_API_URL;
+
+  /* ---------------- WAKE UP BACKEND ---------------- */
+  useEffect(() => {
+    fetch(`${apiUrl}/slots?date=2099-12-31`)
+      .then(() => setBackendReady(true))
+      .catch(() => setBackendReady(true));
+  }, [apiUrl]);
+
+  /* ---------------- CHECK LOGIN ---------------- */
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
     if (token) setIsAdminLogged(true);
@@ -22,28 +33,33 @@ function App() {
     setRefresh(!refresh);
   };
 
-const handleLogout = () => {
-  localStorage.removeItem("adminToken");
-  setIsAdminLogged(false);
-  setShowLogin(false);
-  setSelectedSlot(null);
-};
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    setIsAdminLogged(false);
+    setShowLogin(false);
+    setSelectedSlot(null);
+  };
 
-
+  /* ---------------- ADMIN ---------------- */
   if (isAdminLogged) {
     return <AdminDashboard onLogout={handleLogout} />;
   }
 
+  /* ---------------- UI ---------------- */
   return (
     <div style={{ padding: 20 }}>
       <h1>Barbiere - Prenotazioni</h1>
 
       {!showLogin && (
-        <button onClick={() => setShowLogin(true)}>Login Proprietario</button>
+        <button onClick={() => setShowLogin(true)}>
+          Login Proprietario
+        </button>
       )}
 
       {showLogin ? (
         <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />
+      ) : !backendReady ? (
+        <p>Connessione al server in corso...</p>
       ) : selectedSlot ? (
         <ReservationForm
           selectedDate={selectedDate}
@@ -66,3 +82,4 @@ const handleLogout = () => {
 }
 
 export default App;
+
