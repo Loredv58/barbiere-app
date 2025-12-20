@@ -91,14 +91,34 @@ function authenticateToken(req, res, next) {
 app.get("/slots", async (req, res) => {
   const { date } = req.query;
   if (!date) return res.status(400).json({ message: "Data mancante" });
-  if (!isWorkingDay(date)) return res.status(400).json({ message: "Giorno non lavorativo" });
+  if (!isWorkingDay(date))
+    return res.status(400).json({ message: "Giorno non lavorativo" });
 
-  const result = await pool.query("SELECT time FROM reservations WHERE date=$1", [date]);
+  const result = await pool.query(
+    "SELECT time FROM reservations WHERE date = $1",
+    [date]
+  );
+
   const occupied = result.rows.map(r => r.time);
-  const available = generateSlots().filter(s => !occupied.includes(s));
+  let available = generateSlots().filter(s => !occupied.includes(s));
+
+  // 🔥 NUOVA LOGICA: oggi → solo slot futuri
+  const today = new Date();
+  const requestedDate = new Date(date);
+
+  if (requestedDate.toDateString() === today.toDateString()) {
+    const currentMinutes = today.getHours() * 60 + today.getMinutes();
+
+    available = available.filter(slot => {
+      const [h, m] = slot.split(":").map(Number);
+      const slotMinutes = h * 60 + m;
+      return slotMinutes > currentMinutes;
+    });
+  }
 
   res.json(available);
 });
+
 
 // Prenotazione
 app.post("/reserve", async (req, res) => {
@@ -122,6 +142,35 @@ app.post("/reserve", async (req, res) => {
   );
 
   res.json({ message: "Prenotazione confermata" });
+});
+
+app.get("/days-status", async (req, res) => {
+  const { year, month } = req.query; // month: 0–11
+
+  if (!year || month === undefined)
+    return res.status(400).json({ message: "Parametri mancanti" });
+
+  const daysInMonth = new Date(year, Number(month) + 1, 0).getDate();
+  const result = {};
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(Number(month) + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+    if (!isWorkingDay(dateStr)) {
+      result[day] = false;
+      continue;
+    }
+
+    const resDB = await pool.query(
+      "SELECT COUNT(*) FROM reservations WHERE date = $1",
+      [dateStr]
+    );
+
+    const booked = Number(resDB.rows[0].count);
+    result[day] = booked < generateSlots().length;
+  }
+
+  res.json(result);
 });
 
 // Login admin

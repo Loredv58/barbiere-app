@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const WEEK_DAYS = ["L", "M", "M", "G", "V", "S", "D"];
 const MONTHS = [
@@ -13,6 +13,10 @@ function Calendar({ onDateSelect }) {
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
 
+  const [daysStatus, setDaysStatus] = useState({});
+
+  const apiUrl = process.env.REACT_APP_API_URL;
+
   const maxMonth = new Date(today.getFullYear(), today.getMonth() + 2, 1);
 
   const year = currentMonth.getFullYear();
@@ -21,31 +25,37 @@ function Calendar({ onDateSelect }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
 
+  /* 🔹 FETCH GIORNI DISPONIBILI DAL BACKEND */
+  useEffect(() => {
+    fetch(`${apiUrl}/days-status?year=${year}&month=${month}`)
+      .then(res => res.json())
+      .then(data => setDaysStatus(data))
+      .catch(err => console.error(err));
+  }, [apiUrl, year, month]);
+
   function isDisabled(day) {
     const d = new Date(year, month, day);
-    const weekday = d.getDay(); // 0 domenica
+    const weekday = d.getDay();
 
-    if (d < today) return true;
+    if (d < today) return true;             // passato
     if (weekday === 0 || weekday === 1) return true; // dom-lun
+    if (daysStatus[day] === false) return true; // giorno pieno
+
     return false;
   }
 
   function prevMonth() {
-    setCurrentMonth(
-      new Date(year, month - 1, 1)
-    );
+    setCurrentMonth(new Date(year, month - 1, 1));
   }
 
   function nextMonth() {
     if (currentMonth < maxMonth) {
-      setCurrentMonth(
-        new Date(year, month + 1, 1)
-      );
+      setCurrentMonth(new Date(year, month + 1, 1));
     }
   }
 
   return (
-    <div style={{ maxWidth: 350, marginBottom: 20 }}>
+    <div style={{ maxWidth: 360, marginBottom: 20 }}>
       {/* HEADER */}
       <div style={{
         display: "flex",
@@ -61,10 +71,7 @@ function Calendar({ onDateSelect }) {
           {MONTHS[month]} {year}
         </strong>
 
-        <button
-          onClick={nextMonth}
-          disabled={currentMonth >= maxMonth}
-        >
+        <button onClick={nextMonth} disabled={currentMonth >= maxMonth}>
           ▶
         </button>
       </div>
@@ -124,4 +131,3 @@ function Calendar({ onDateSelect }) {
 }
 
 export default Calendar;
-
