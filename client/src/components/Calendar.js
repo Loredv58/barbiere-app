@@ -9,6 +9,13 @@ const MONTHS = [
 function Calendar({ onDateSelect }) {
   const today = new Date();
 
+  const todayMidnight = new Date(
+  today.getFullYear(),
+  today.getMonth(),
+  today.getDate()
+);
+
+
   const [currentMonth, setCurrentMonth] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
@@ -37,7 +44,7 @@ function Calendar({ onDateSelect }) {
     const d = new Date(year, month, day);
     const weekday = d.getDay();
 
-    if (d < today) return true;             // passato
+    if (d < todayMidnight) return true; // passato
     if (weekday === 0 || weekday === 1) return true; // dom-lun
     if (daysStatus[day] === false) return true; // giorno pieno
 

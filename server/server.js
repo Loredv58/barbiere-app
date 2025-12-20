@@ -94,15 +94,17 @@ app.get("/slots", async (req, res) => {
   if (!isWorkingDay(date))
     return res.status(400).json({ message: "Giorno non lavorativo" });
 
+  // Recupero slot già prenotati dal DB
   const result = await pool.query(
     "SELECT time FROM reservations WHERE date = $1",
     [date]
   );
-
   const occupied = result.rows.map(r => r.time);
+
+  // Genero tutti gli slot standard e tolgo quelli occupati
   let available = generateSlots().filter(s => !occupied.includes(s));
 
-  // 🔥 NUOVA LOGICA: oggi → solo slot futuri
+  // 🔹 LOGICA PER LA DATA ODIERNA: mostra solo slot futuri
   const today = new Date();
   const requestedDate = new Date(date);
 
@@ -112,12 +114,13 @@ app.get("/slots", async (req, res) => {
     available = available.filter(slot => {
       const [h, m] = slot.split(":").map(Number);
       const slotMinutes = h * 60 + m;
-      return slotMinutes > currentMinutes;
+      return slotMinutes > currentMinutes; // solo slot successivi all'orario corrente
     });
   }
 
   res.json(available);
 });
+
 
 
 // Prenotazione
