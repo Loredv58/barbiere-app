@@ -88,33 +88,37 @@ function authenticateToken(req, res, next) {
 /* ---------------- ROUTES ---------------- */
 
 // Slots disponibili per data
+
 app.get("/slots", async (req, res) => {
   const { date } = req.query;
   if (!date) return res.status(400).json({ message: "Data mancante" });
   if (!isWorkingDay(date))
     return res.status(400).json({ message: "Giorno non lavorativo" });
 
-  // Recupero slot già prenotati dal DB
   const result = await pool.query(
     "SELECT time FROM reservations WHERE date = $1",
     [date]
   );
-  const occupied = result.rows.map(r => r.time);
 
-  // Genero tutti gli slot standard e tolgo quelli occupati
+  const occupied = result.rows.map(r => r.time);
   let available = generateSlots().filter(s => !occupied.includes(s));
 
-  // 🔹 LOGICA PER LA DATA ODIERNA: mostra solo slot futuri
-  const today = new Date();
-  const requestedDate = new Date(date);
+  const now = new Date();
+  const [y, m, d] = date.split("-").map(Number);
+  const requestedDate = new Date(y, m - 1, d);
 
-  if (requestedDate.toDateString() === today.toDateString()) {
-    const currentMinutes = today.getHours() * 60 + today.getMinutes();
+  // 🔥 FILTRO ORARIO SEMPRE CORRETTO
+  if (
+    requestedDate.getFullYear() === now.getFullYear() &&
+    requestedDate.getMonth() === now.getMonth() &&
+    requestedDate.getDate() === now.getDate()
+  ) {
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     available = available.filter(slot => {
-      const [h, m] = slot.split(":").map(Number);
-      const slotMinutes = h * 60 + m;
-      return slotMinutes > currentMinutes; // solo slot successivi all'orario corrente
+      const [h, min] = slot.split(":").map(Number);
+      const slotMinutes = h * 60 + min;
+      return slotMinutes > currentMinutes;
     });
   }
 
