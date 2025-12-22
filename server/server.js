@@ -1,9 +1,12 @@
 process.env.TZ = "Europe/Rome";
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const XLSX = require("xlsx");
+const path = require("path");
+const fs = require("fs");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 
@@ -19,7 +22,6 @@ const OPEN_MORNING = 8;
 const CLOSE_MORNING = 13;
 const OPEN_AFTERNOON = 14;
 const CLOSE_AFTERNOON = 20;
-
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Admin
@@ -28,29 +30,10 @@ const adminUser = {
   passwordHash: bcrypt.hashSync(process.env.ADMIN_PASSWORD || "admin123", 10)
 };
 
-// Pool PostgreSQL
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
-
-/* ---------------- INIT DB ---------------- */
-
-async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS reservations (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      surname TEXT NOT NULL,
-      email TEXT NOT NULL,
-      phone TEXT NOT NULL,
-      date DATE NOT NULL,
-      time TEXT NOT NULL
-    )
-  `);
-}
-
-initDB();
+// Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 /* ---------------- UTILS ---------------- */
 
@@ -60,7 +43,6 @@ function isWorkingDay(dateStr) {
   const weekday = date.getDay();
   return weekday !== 0 && weekday !== 1; // domenica, lunedì
 }
-
 
 function generateSlots() {
   const slots = [];
@@ -89,33 +71,32 @@ function authenticateToken(req, res, next) {
 /* ---------------- ROUTES ---------------- */
 
 // Slots disponibili per data
-
 app.get("/slots", async (req, res) => {
   const { date } = req.query;
   if (!date) return res.status(400).json({ message: "Data mancante" });
-  if (!isWorkingDay(date))
-    return res.status(400).json({ message: "Giorno non lavorativo" });
+  if (!isWorkingDay(date)) return res.status(400).json({ message: "Giorno non lavorativo" });
 
-  const result = await pool.query(
-    "SELECT time FROM reservations WHERE date = $1",
-    [date]
-  );
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("time")
+    .eq("date", date);
 
-  const occupied = result.rows.map(r => r.time);
+  if (error) return res.status(500).json({ message: error.message });
+
+  const occupied = data.map(r => r.time);
   let available = generateSlots().filter(s => !occupied.includes(s));
 
+  // 🔥 FILTRO ORARIO SEMPRE CORRETTO
   const now = new Date();
   const [y, m, d] = date.split("-").map(Number);
   const requestedDate = new Date(y, m - 1, d);
 
-  // 🔥 FILTRO ORARIO SEMPRE CORRETTO
   if (
     requestedDate.getFullYear() === now.getFullYear() &&
     requestedDate.getMonth() === now.getMonth() &&
     requestedDate.getDate() === now.getDate()
   ) {
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
     available = available.filter(slot => {
       const [h, min] = slot.split(":").map(Number);
       const slotMinutes = h * 60 + min;
@@ -126,8 +107,6 @@ app.get("/slots", async (req, res) => {
   res.json(available);
 });
 
-
-
 // Prenotazione
 app.post("/reserve", async (req, res) => {
   const { name, surname, email, phone, date, time } = req.body;
@@ -137,26 +116,28 @@ app.post("/reserve", async (req, res) => {
 
   if (!isWorkingDay(date)) return res.status(400).json({ message: "Giorno non lavorativo" });
 
-  const exists = await pool.query(
-    "SELECT 1 FROM reservations WHERE date=$1 AND time=$2",
-    [date, time]
-  );
-  if (exists.rowCount > 0) return res.status(400).json({ message: "Slot già prenotato" });
+  const { data: exists, error: existsError } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("date", date)
+    .eq("time", time);
 
-  await pool.query(
-    `INSERT INTO reservations (name, surname, email, phone, date, time)
-     VALUES ($1,$2,$3,$4,$5,$6)`,
-    [name, surname, email, phone, date, time]
-  );
+  if (existsError) return res.status(500).json({ message: existsError.message });
+  if (exists.length > 0) return res.status(400).json({ message: "Slot già prenotato" });
+
+  const { error } = await supabase
+    .from("reservations")
+    .insert([{ name, surname, email, phone, date, time }]);
+
+  if (error) return res.status(500).json({ message: error.message });
 
   res.json({ message: "Prenotazione confermata" });
 });
 
+// Days status
 app.get("/days-status", async (req, res) => {
-  const { year, month } = req.query; // month: 0–11
-
-  if (!year || month === undefined)
-    return res.status(400).json({ message: "Parametri mancanti" });
+  const { year, month } = req.query;
+  if (!year || month === undefined) return res.status(400).json({ message: "Parametri mancanti" });
 
   const daysInMonth = new Date(year, Number(month) + 1, 0).getDate();
   const result = {};
@@ -169,13 +150,17 @@ app.get("/days-status", async (req, res) => {
       continue;
     }
 
-    const resDB = await pool.query(
-      "SELECT COUNT(*) FROM reservations WHERE date = $1",
-      [dateStr]
-    );
+    const { data, error } = await supabase
+      .from("reservations")
+      .select("*", { count: "exact" })
+      .eq("date", dateStr);
 
-    const booked = Number(resDB.rows[0].count);
-    result[day] = booked < generateSlots().length;
+    if (error) {
+      result[day] = false;
+      continue;
+    }
+
+    result[day] = data.length < generateSlots().length;
   }
 
   res.json(result);
@@ -193,20 +178,27 @@ app.post("/admin/login", (req, res) => {
 
 // Visualizza prenotazioni (protetta)
 app.get("/reservations", authenticateToken, async (req, res) => {
-  const result = await pool.query("SELECT * FROM reservations ORDER BY date, time");
-  res.json(result.rows);
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .order("date", { ascending: true })
+    .order("time", { ascending: true });
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json(data);
 });
 
 // Esporta prenotazioni (protetta)
 app.get("/export-reservations", authenticateToken, async (req, res) => {
-  const result = await pool.query("SELECT * FROM reservations ORDER BY date, time");
-  const reservations = result.rows;
+  const { data: reservations, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .order("date", { ascending: true })
+    .order("time", { ascending: true });
 
+  if (error) return res.status(500).json({ message: error.message });
   if (reservations.length === 0) return res.status(400).send("Nessuna prenotazione");
-
-  const XLSX = require("xlsx");
-  const path = require("path");
-  const fs = require("fs");
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(reservations);
@@ -221,13 +213,13 @@ app.get("/export-reservations", authenticateToken, async (req, res) => {
   });
 });
 
-// Rotta per prenotazioni filtrate per data e ordinate per orario
+// Prenotazioni filtrate per data (Admin)
 app.get("/admin/reservations", async (req, res) => {
   const token = req.headers["authorization"]?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Token mancante" });
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    jwt.verify(token, JWT_SECRET);
   } catch (err) {
     return res.status(403).json({ message: "Token non valido" });
   }
@@ -235,22 +227,17 @@ app.get("/admin/reservations", async (req, res) => {
   const { date } = req.query;
   if (!date) return res.status(400).json({ message: "Data mancante" });
 
-  try {
-    // Query al database: filtra per data e ordina per orario
-    const result = await pool.query(
-      "SELECT name, surname, email, phone, date, time FROM reservations WHERE date = $1 ORDER BY time ASC",
-      [date]
-    );
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("name, surname, email, phone, date, time")
+    .eq("date", date)
+    .order("time", { ascending: true });
 
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Errore nel recupero prenotazioni" });
-  }
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json(data);
 });
 
 /* ---------------- START ---------------- */
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log("Server avviato su porta " + PORT));
-
