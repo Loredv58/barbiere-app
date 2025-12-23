@@ -157,8 +157,6 @@ if (selectedDate)
     />
   );
 
-  }
-
   if (showCalendar) {
     return (
       <>
