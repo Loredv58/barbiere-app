@@ -19,8 +19,10 @@ function Calendar({ onDateSelect }) {
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
 
+  // 🔥 cache per mese (chiave: "YYYY-M")
+  const [daysCache, setDaysCache] = useState({});
   const [daysStatus, setDaysStatus] = useState({});
-  const [loadingDays, setLoadingDays] = useState(true);
+  const [loadingDays, setLoadingDays] = useState(false);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -32,13 +34,26 @@ function Calendar({ onDateSelect }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
 
-  /* 🔹 FETCH GIORNI DISPONIBILI DAL BACKEND */
+  /* 🔹 FETCH + CACHE */
   useEffect(() => {
+    const cacheKey = `${year}-${month}`;
+
+    // ✅ se già in cache → usa subito
+    if (daysCache[cacheKey]) {
+      setDaysStatus(daysCache[cacheKey]);
+      return;
+    }
+
+    // ❌ non in cache → fetch
     setLoadingDays(true);
 
     fetch(`${apiUrl}/days-status?year=${year}&month=${month}`)
       .then(res => res.json())
       .then(data => {
+        setDaysCache(prev => ({
+          ...prev,
+          [cacheKey]: data
+        }));
         setDaysStatus(data);
         setLoadingDays(false);
       })
@@ -46,16 +61,16 @@ function Calendar({ onDateSelect }) {
         console.error(err);
         setLoadingDays(false);
       });
-  }, [apiUrl, year, month]);
+  }, [apiUrl, year, month, daysCache]);
 
   function isDisabled(day) {
-    if (loadingDays) return true; // ⛔ evita lampeggi
+    if (loadingDays) return true;
 
     const d = new Date(year, month, day);
     const weekday = d.getDay();
 
-    if (d < todayMidnight) return true; // passato
-    if (weekday === 0 || weekday === 1) return true; // domenica-lunedì
+    if (d < todayMidnight) return true;      // passato
+    if (weekday === 0 || weekday === 1) return true; // dom-lun
     if (daysStatus[day] === false) return true; // giorno pieno
 
     return false;
@@ -152,7 +167,7 @@ function Calendar({ onDateSelect }) {
         })}
       </div>
 
-      {/* FEEDBACK LOADING */}
+      {/* LOADING SOLO LA PRIMA VOLTA */}
       {loadingDays && (
         <p style={{ textAlign: "center", marginTop: 10, fontSize: 12 }}>
           Caricamento disponibilità…
@@ -163,4 +178,5 @@ function Calendar({ onDateSelect }) {
 }
 
 export default Calendar;
+
 
