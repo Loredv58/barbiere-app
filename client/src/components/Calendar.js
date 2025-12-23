@@ -10,17 +10,17 @@ function Calendar({ onDateSelect }) {
   const today = new Date();
 
   const todayMidnight = new Date(
-  today.getFullYear(),
-  today.getMonth(),
-  today.getDate()
-);
-
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
 
   const [currentMonth, setCurrentMonth] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
 
   const [daysStatus, setDaysStatus] = useState({});
+  const [loadingDays, setLoadingDays] = useState(true);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -34,18 +34,28 @@ function Calendar({ onDateSelect }) {
 
   /* 🔹 FETCH GIORNI DISPONIBILI DAL BACKEND */
   useEffect(() => {
+    setLoadingDays(true);
+
     fetch(`${apiUrl}/days-status?year=${year}&month=${month}`)
       .then(res => res.json())
-      .then(data => setDaysStatus(data))
-      .catch(err => console.error(err));
+      .then(data => {
+        setDaysStatus(data);
+        setLoadingDays(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoadingDays(false);
+      });
   }, [apiUrl, year, month]);
 
   function isDisabled(day) {
+    if (loadingDays) return true; // ⛔ evita lampeggi
+
     const d = new Date(year, month, day);
     const weekday = d.getDay();
 
     if (d < todayMidnight) return true; // passato
-    if (weekday === 0 || weekday === 1) return true; // dom-lun
+    if (weekday === 0 || weekday === 1) return true; // domenica-lunedì
     if (daysStatus[day] === false) return true; // giorno pieno
 
     return false;
@@ -64,12 +74,14 @@ function Calendar({ onDateSelect }) {
   return (
     <div style={{ maxWidth: 360, marginBottom: 20 }}>
       {/* HEADER */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 10
-      }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 10
+        }}
+      >
         <button onClick={prevMonth} disabled={month === today.getMonth()}>
           ◀
         </button>
@@ -84,24 +96,28 @@ function Calendar({ onDateSelect }) {
       </div>
 
       {/* GIORNI SETTIMANA */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(7, 1fr)",
-        textAlign: "center",
-        fontWeight: "bold",
-        marginBottom: 5
-      }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          textAlign: "center",
+          fontWeight: "bold",
+          marginBottom: 5
+        }}
+      >
         {WEEK_DAYS.map(d => (
           <div key={d}>{d}</div>
         ))}
       </div>
 
       {/* GIORNI */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(7, 1fr)",
-        gap: 4
-      }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 4
+        }}
+      >
         {[...Array(firstDayIndex)].map((_, i) => (
           <div key={"empty" + i} />
         ))}
@@ -124,7 +140,9 @@ function Calendar({ onDateSelect }) {
               }}
               onClick={() =>
                 onDateSelect(
-                  `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                  `${year}-${String(month + 1).padStart(2, "0")}-${String(
+                    day
+                  ).padStart(2, "0")}`
                 )
               }
             >
@@ -133,8 +151,16 @@ function Calendar({ onDateSelect }) {
           );
         })}
       </div>
+
+      {/* FEEDBACK LOADING */}
+      {loadingDays && (
+        <p style={{ textAlign: "center", marginTop: 10, fontSize: 12 }}>
+          Caricamento disponibilità…
+        </p>
+      )}
     </div>
   );
 }
 
 export default Calendar;
+
