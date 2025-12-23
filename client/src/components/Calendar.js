@@ -24,7 +24,7 @@ function Calendar({ onDateSelect }) {
   const [daysStatus, setDaysStatus] = useState({});
   const [loadingDays, setLoadingDays] = useState(false);
 
-  // ✅ nuovo: indica se il calendario è pronto la prima volta
+  // ✅ calendario inizializzato
   const [initialized, setInitialized] = useState(false);
 
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -37,18 +37,17 @@ function Calendar({ onDateSelect }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
 
-  /* 🔹 FETCH + CACHE */
+  /* ---------------- FETCH MESE CORRENTE ---------------- */
   useEffect(() => {
     const cacheKey = `${year}-${month}`;
 
-    // ✅ se già in cache → usa subito
+    // ✅ usa cache immediatamente
     if (daysCache[cacheKey]) {
       setDaysStatus(daysCache[cacheKey]);
       setInitialized(true);
       return;
     }
 
-    // ❌ non in cache → fetch
     setLoadingDays(true);
 
     fetch(`${apiUrl}/days-status?year=${year}&month=${month}`)
@@ -60,34 +59,51 @@ function Calendar({ onDateSelect }) {
         }));
         setDaysStatus(data);
         setLoadingDays(false);
-        setInitialized(true); // 👈 prima inizializzazione
+        setInitialized(true);
       })
       .catch(err => {
         console.error(err);
         setLoadingDays(false);
-        setInitialized(true); // evita blocchi UI
+        setInitialized(true);
       });
   }, [apiUrl, year, month, daysCache]);
 
-  /* 🧠 UX PROFESSIONALE:
-     non renderizzare il calendario finché non è pronto */
-  if (!initialized) {
-    return (
-      <p style={{ textAlign: "center", fontSize: 14 }}>
-        Preparazione calendario…
-      </p>
-    );
-  }
+  /* ---------------- 🔥 PRELOAD MESI FUTURI (BACKGROUND) ---------------- */
+  useEffect(() => {
+    if (!initialized) return;
 
+    const monthsToPreload = [1, 2]; // mese +1 e +2
+
+    monthsToPreload.forEach(offset => {
+      const preloadDate = new Date(year, month + offset, 1);
+      const y = preloadDate.getFullYear();
+      const m = preloadDate.getMonth();
+      const key = `${y}-${m}`;
+
+      if (daysCache[key]) return; // già in cache
+
+      fetch(`${apiUrl}/days-status?year=${y}&month=${m}`)
+        .then(res => res.json())
+        .then(data => {
+          setDaysCache(prev => ({
+            ...prev,
+            [key]: data
+          }));
+        })
+        .catch(() => {});
+    });
+  }, [initialized, year, month, apiUrl, daysCache]);
+
+  /* ---------------- UTILS ---------------- */
   function isDisabled(day) {
     if (loadingDays) return true;
 
     const d = new Date(year, month, day);
     const weekday = d.getDay();
 
-    if (d < todayMidnight) return true;           // passato
+    if (d < todayMidnight) return true;              // passato
     if (weekday === 0 || weekday === 1) return true; // dom-lun
-    if (daysStatus[day] === false) return true;   // giorno pieno
+    if (daysStatus[day] === false) return true;      // giorno pieno
 
     return false;
   }
@@ -102,6 +118,7 @@ function Calendar({ onDateSelect }) {
     }
   }
 
+  /* ---------------- UI ---------------- */
   return (
     <div style={{ maxWidth: 360, marginBottom: 20 }}>
       {/* HEADER */}
@@ -187,6 +204,3 @@ function Calendar({ onDateSelect }) {
 }
 
 export default Calendar;
-
-
-

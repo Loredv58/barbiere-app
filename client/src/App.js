@@ -57,7 +57,24 @@ function App() {
     return (
       <div style={{ padding: 20, textAlign: "center" }}>
         <h2>Barbiere - Prenotazioni</h2>
-        <p>Connessione al server in corso…</p>
+        {!backendReady && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "#fff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 16,
+      fontWeight: 500,
+      zIndex: 1000
+    }}
+  >
+    Connessione al server…
+  </div>
+)}
+
       </div>
     );
   }
