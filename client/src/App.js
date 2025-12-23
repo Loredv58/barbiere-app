@@ -15,6 +15,7 @@ function App() {
 
   // Gestione calendario Home → prenotazione
   const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarCache, setCalendarCache] = useState({}); // 🔹 cache giorni disponibili
 
   // Modalità login / dashboard
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -28,17 +29,34 @@ function App() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  /* ---------------- WAKE UP BACKEND ---------------- */
+  /* ---------------- WAKE UP BACKEND + PRELOAD 3 MESI ---------------- */
   useEffect(() => {
     let cancelled = false;
+    const today = new Date();
+    const preloadMonths = [0, 1, 2]; // questo mese + 2 mesi successivi
 
-    fetch(`${apiUrl}/slots?date=2099-12-31`).finally(() => {
-      if (!cancelled) setBackendReady(true);
+    Promise.all(
+      preloadMonths.map(offset => {
+        const date = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        return fetch(`${apiUrl}/days-status?year=${year}&month=${month}`)
+          .then(res => res.json())
+          .then(data => ({ [`${year}-${month}`]: data }))
+          .catch(() => ({ [`${year}-${month}`]: {} }));
+      })
+    ).then(results => {
+      if (!cancelled) {
+        const merged = Object.assign({}, ...results);
+        setCalendarCache(merged);
+        setBackendReady(true);
+      }
     });
 
-    return () => {
-      cancelled = true;
-    };
+    // Mantieni wake-up server anche su slot remoto
+    fetch(`${apiUrl}/slots?date=2099-12-31`).catch(() => {});
+
+    return () => { cancelled = true; };
   }, [apiUrl]);
 
   /* ---------------- CHECK ADMIN LOGIN ---------------- */
@@ -84,13 +102,9 @@ function App() {
 
   /* ---------------- RENDER CONDIZIONALE ---------------- */
 
-  // Admin area
-  if (isAdminLogged) {
-    return <AdminDashboard onLogout={handleLogoutAdmin} />;
-  }
+  if (isAdminLogged) return <AdminDashboard onLogout={handleLogoutAdmin} />;
 
-  // User dashboard
-  if (showUserDashboard) {
+  if (showUserDashboard)
     return (
       <UserDashboard
         reservations={userReservations}
@@ -98,9 +112,7 @@ function App() {
         onUpdateReservation={handleUserUpdate}
       />
     );
-  }
 
-  // Loading globale backend
   if (!backendReady) {
     return (
       <div style={{ padding: 20, textAlign: "center" }}>
@@ -124,13 +136,9 @@ function App() {
     );
   }
 
-  // Admin login
-  if (showAdminLogin) {
-    return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
-  }
+  if (showAdminLogin) return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
 
-  // User login
-  if (showUserLogin) {
+  if (showUserLogin)
     return (
       <UserLogin
         onLoginSuccess={(reservations) => {
@@ -140,10 +148,8 @@ function App() {
         onBack={() => setShowUserLogin(false)}
       />
     );
-  }
 
-  // Prenotazione specifica slot
-  if (selectedSlot) {
+  if (selectedSlot)
     return (
       <ReservationForm
         selectedDate={selectedDate}
@@ -151,25 +157,19 @@ function App() {
         onReservationDone={handleReservationDone}
       />
     );
-  }
 
-  // Visualizza slot dopo aver scelto il giorno
-  if (selectedDate) {
+  if (selectedDate)
+    return <SlotsList key={refresh} selectedDate={selectedDate} onSelectSlot={setSelectedSlot} />;
+
+  if (showCalendar)
     return (
-      <SlotsList
-        key={refresh}
-        selectedDate={selectedDate}
-        onSelectSlot={setSelectedSlot}
+      <Calendar
+        onDateSelect={setSelectedDate}
+        onBack={() => setShowCalendar(false)}
+        preloadedDays={calendarCache} // 🔹 passa la cache al calendario
       />
     );
-  }
 
-  // Mostra il calendario
-  if (showCalendar) {
-    return <Calendar onDateSelect={setSelectedDate} />;
-  }
-
-  // Home principale
   return (
     <Home
       onBookClick={() => {

@@ -6,78 +6,71 @@ const MONTHS = [
   "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
 ];
 
-function Calendar({ onDateSelect }) {
+function Calendar({ onDateSelect, onBack }) {
   const today = new Date();
   const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [daysCache, setDaysCache] = useState({});
   const [daysStatus, setDaysStatus] = useState({});
-  const [initialized, setInitialized] = useState(false); // calendario pronto
-  const [loading, setLoading] = useState(true);
+  const [loadingDays, setLoadingDays] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const apiUrl = process.env.REACT_APP_API_URL;
-  const maxMonth = new Date(today.getFullYear(), today.getMonth() + 2, 1);
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
-
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
 
-  /* ---------------- PRELOAD 3 MESI INIZIALI ---------------- */
+  // Fetch giorni e cache
   useEffect(() => {
-    setLoading(true);
-    const monthsToLoad = [0, 1, 2].map(offset => {
-      const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-      return { y: d.getFullYear(), m: d.getMonth(), key: `${d.getFullYear()}-${d.getMonth()}` };
-    });
-
-    Promise.all(
-      monthsToLoad.map(({ y, m, key }) => {
-        const cached = daysCache[key];
-        if (cached) return Promise.resolve({ key, data: cached });
-        return fetch(`${apiUrl}/days-status?year=${y}&month=${m}`)
-          .then(res => res.json())
-          .then(data => ({ key, data }))
-          .catch(() => ({ key, data: {} }));
-      })
-    ).then(results => {
-      const newCache = { ...daysCache };
-      results.forEach(r => { newCache[r.key] = r.data; });
-      setDaysCache(newCache);
-
-      const currentKey = `${year}-${month}`;
-      setDaysStatus(newCache[currentKey] || {});
+    const cacheKey = `${year}-${month}`;
+    if (daysCache[cacheKey]) {
+      setDaysStatus(daysCache[cacheKey]);
       setInitialized(true);
-      setLoading(false);
+      return;
+    }
 
-      // Salva in localStorage per cache persistente
-      try {
-        localStorage.setItem("calendarCache", JSON.stringify(newCache));
-      } catch (e) {}
-    });
-  }, [apiUrl, year, month]);
+    setLoadingDays(true);
+    fetch(`${apiUrl}/days-status?year=${year}&month=${month}`)
+      .then(res => res.json())
+      .then(data => {
+        setDaysCache(prev => ({ ...prev, [cacheKey]: data }));
+        setDaysStatus(data);
+        setLoadingDays(false);
+        setInitialized(true);
+      })
+      .catch(() => { setLoadingDays(false); setInitialized(true); });
+  }, [apiUrl, year, month, daysCache]);
 
-  /* ---------------- CARICAMENTO CACHE DA localStorage ---------------- */
+  // Preload mesi successivi
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("calendarCache") || "{}");
-      setDaysCache(stored);
-    } catch (e) {}
-  }, []);
+    if (!initialized) return;
 
-  /* ---------------- UTILS ---------------- */
+    [1, 2].forEach(offset => {
+      const preloadDate = new Date(year, month + offset, 1);
+      const y = preloadDate.getFullYear();
+      const m = preloadDate.getMonth();
+      const key = `${y}-${m}`;
+      if (daysCache[key]) return;
+
+      fetch(`${apiUrl}/days-status?year=${y}&month=${m}`)
+        .then(res => res.json())
+        .then(data => {
+          setDaysCache(prev => ({ ...prev, [key]: data }));
+        })
+        .catch(() => {});
+    });
+  }, [initialized, year, month, apiUrl, daysCache]);
+
   function isDisabled(day) {
-    if (loading) return true;
-
+    if (loadingDays) return true;
     const d = new Date(year, month, day);
     const weekday = d.getDay();
-
-    if (d < todayMidnight) return true;           // passato
-    if (weekday === 0 || weekday === 1) return true; // dom-lun
-    if (daysStatus[day] === false) return true;   // giorno pieno
-
+    if (d < todayMidnight) return true;
+    if (weekday === 0 || weekday === 1) return true;
+    if (daysStatus[day] === false) return true;
     return false;
   }
 
@@ -86,56 +79,86 @@ function Calendar({ onDateSelect }) {
   }
 
   function nextMonth() {
-    if (currentMonth < maxMonth) {
-      setCurrentMonth(new Date(year, month + 1, 1));
-    }
+    setCurrentMonth(new Date(year, month + 1, 1));
   }
 
-  /* ---------------- UI ---------------- */
+  /* ---------------- STILE CENTRATO ---------------- */
   return (
-    <div style={{ maxWidth: 360, marginBottom: 20 }}>
-      {/* HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        <button onClick={prevMonth} disabled={month === today.getMonth()}>◀</button>
-        <strong>{MONTHS[month]} {year}</strong>
-        <button onClick={nextMonth} disabled={currentMonth >= maxMonth}>▶</button>
-      </div>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
+        minHeight: "70vh",
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          background: "rgba(255, 255, 255, 0.95)",
+          padding: 20,
+          borderRadius: 12,
+          boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+          maxWidth: 400,
+          width: "100%",
+        }}
+      >
+        {/* Tasto indietro */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{
+              marginBottom: 10,
+              padding: "6px 12px",
+              borderRadius: 6,
+              border: "none",
+              backgroundColor: "#f4c542",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            ← Torna indietro
+          </button>
+        )}
 
-      {/* GIORNI SETTIMANA */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontWeight: "bold", marginBottom: 5 }}>
-        {WEEK_DAYS.map(d => <div key={d}>{d}</div>)}
-      </div>
+        {/* HEADER */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <button onClick={prevMonth} disabled={month === today.getMonth()}>◀</button>
+          <strong>{MONTHS[month]} {year}</strong>
+          <button onClick={nextMonth}>▶</button>
+        </div>
 
-      {/* GIORNI */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
-        {[...Array(firstDayIndex)].map((_, i) => <div key={"empty" + i} />)}
+        {/* GIORNI SETTIMANA */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontWeight: "bold", marginBottom: 5 }}>
+          {WEEK_DAYS.map(d => <div key={d}>{d}</div>)}
+        </div>
 
-        {[...Array(daysInMonth)].map((_, i) => {
-          const day = i + 1;
-          const disabled = isDisabled(day);
-
-          return (
-            <button
-              key={day}
-              disabled={disabled}
-              style={{
-                padding: 8,
-                borderRadius: 6,
-                border: "1px solid #ccc",
-                background: loading ? "#f5f5f5" : disabled ? "#eee" : "#fff",
-                cursor: disabled || loading ? "not-allowed" : "pointer",
-                opacity: disabled || loading ? 0.4 : 1
-              }}
-              onClick={() =>
-                !loading && onDateSelect(
-                  `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-                )
-              }
-            >
-              {day}
-            </button>
-          );
-        })}
+        {/* GIORNI */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+          {[...Array(firstDayIndex)].map((_, i) => <div key={"empty" + i} />)}
+          {[...Array(daysInMonth)].map((_, i) => {
+            const day = i + 1;
+            const disabled = isDisabled(day);
+            return (
+              <button
+                key={day}
+                disabled={disabled}
+                style={{
+                  padding: 8,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                  background: disabled ? "#eee" : "#fff",
+                  cursor: disabled ? "not-allowed" : "pointer",
+                  opacity: disabled ? 0.4 : 1,
+                }}
+                onClick={() => onDateSelect(`${year}-${String(month + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`)}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

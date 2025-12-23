@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function ReservationForm({ selectedDate, selectedSlot, onReservationDone }) {
+function ReservationForm({ selectedDate, selectedSlot, onReservationDone, onBack }) {
   const [form, setForm] = useState({
     name: "",
     surname: "",
@@ -35,20 +35,13 @@ function ReservationForm({ selectedDate, selectedSlot, onReservationDone }) {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || "Errore nella prenotazione");
-      }
+      if (!res.ok) throw new Error(data.message || "Errore nella prenotazione");
 
       alert(data.message);
       onReservationDone();
 
       // Reset form
-      setForm({
-        name: "",
-        surname: "",
-        email: "",
-        phone: "",
-      });
+      setForm({ name: "", surname: "", email: "", phone: "" });
     } catch (err) {
       console.error(err);
       alert("Errore: " + err.message);
@@ -56,46 +49,103 @@ function ReservationForm({ selectedDate, selectedSlot, onReservationDone }) {
   };
 
   return (
-    <div>
-      <h2>
-        Prenota il {selectedDate} alle {selectedSlot}
-      </h2>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        width: "100%",
+        minHeight: "70vh",
+        padding: 20,
+        backgroundImage: "url('/barber-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div
+        style={{
+          background: "rgba(255, 255, 255, 0.95)",
+          padding: 20,
+          borderRadius: 12,
+          boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+          maxWidth: 400,
+          width: "100%",
+        }}
+      >
+        {/* Tasto indietro */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{
+              marginBottom: 10,
+              padding: "6px 12px",
+              borderRadius: 6,
+              border: "none",
+              backgroundColor: "#f4c542",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            ← Torna indietro
+          </button>
+        )}
 
-      <form onSubmit={handleSubmit}>
-        <input
-          name="name"
-          placeholder="Nome"
-          value={form.name}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="surname"
-          placeholder="Cognome"
-          value={form.surname}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="phone"
-          placeholder="Telefono"
-          value={form.phone}
-          onChange={handleChange}
-          required
-        />
-        <button type="submit">Conferma Prenotazione</button>
-      </form>
+        <h2 style={{ marginBottom: 20 }}>
+          Prenota il {selectedDate} alle {selectedSlot}
+        </h2>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <input
+            name="name"
+            placeholder="Nome"
+            value={form.name}
+            onChange={handleChange}
+            required
+            style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+          />
+          <input
+            name="surname"
+            placeholder="Cognome"
+            value={form.surname}
+            onChange={handleChange}
+            required
+            style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+          />
+          <input
+            name="phone"
+            placeholder="Telefono"
+            value={form.phone}
+            onChange={handleChange}
+            required
+            style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+          />
+          <button
+            type="submit"
+            style={{
+              padding: 10,
+              borderRadius: 6,
+              border: "none",
+              backgroundColor: "#f4c542",
+              fontWeight: "bold",
+              cursor: "pointer",
+              marginTop: 10,
+            }}
+          >
+            Conferma Prenotazione
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
 
 export default ReservationForm;
-
