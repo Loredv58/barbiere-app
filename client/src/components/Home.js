@@ -1,6 +1,6 @@
 import React from "react";
 
-function Home({ onBookClick, onManageClick }) {
+function Home({ onBookClick, onManageClick, onAdminLoginClick }) {
   return (
     <div
       style={{
@@ -15,21 +15,21 @@ function Home({ onBookClick, onManageClick }) {
         alignItems: "center",
         color: "#fff",
         textAlign: "center",
-        padding: 20
+        padding: 20,
       }}
     >
       <h1
         style={{
           fontSize: 32,
           marginBottom: 40,
-          textShadow: "2px 2px 6px rgba(0,0,0,0.5)"
+          textShadow: "2px 2px 6px rgba(0,0,0,0.5)",
         }}
       >
         Fabio Villano Parrucchieri - Prenotazioni
       </h1>
 
       <button
-        onClick={e => { e.preventDefault(); onBookClick(); }}
+        onClick={onBookClick}
         style={{
           padding: "15px 30px",
           fontSize: 18,
@@ -41,16 +41,13 @@ function Home({ onBookClick, onManageClick }) {
           color: "#000",
           fontWeight: "bold",
           boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
-          transition: "transform 0.2s, box-shadow 0.2s"
         }}
-        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
-        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
       >
         Prenota Appuntamento
       </button>
 
       <button
-        onClick={e => { e.preventDefault(); onManageClick(); }}
+        onClick={onManageClick}
         style={{
           padding: "15px 30px",
           fontSize: 18,
@@ -62,16 +59,30 @@ function Home({ onBookClick, onManageClick }) {
           color: "#000",
           fontWeight: "bold",
           boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
-          transition: "transform 0.2s, box-shadow 0.2s"
         }}
-        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
-        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
       >
         Gestisci Appuntamento
+      </button>
+
+      <button
+        onClick={onAdminLoginClick}
+        style={{
+          padding: "10px 20px",
+          fontSize: 16,
+          marginTop: 20,
+          borderRadius: 6,
+          border: "none",
+          cursor: "pointer",
+          backgroundColor: "#333",
+          color: "#fff",
+          fontWeight: "bold",
+          boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
+        }}
+      >
+        Login Proprietario
       </button>
     </div>
   );
 }
 
 export default Home;
-

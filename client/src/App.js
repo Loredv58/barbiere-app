@@ -13,11 +13,13 @@ function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [refresh, setRefresh] = useState(false);
 
-  // Admin login
+  // Gestione calendario Home → prenotazione
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  // Modalità login / dashboard
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isAdminLogged, setIsAdminLogged] = useState(false);
 
-  // User login
   const [showUserLogin, setShowUserLogin] = useState(false);
   const [userReservations, setUserReservations] = useState([]);
   const [showUserDashboard, setShowUserDashboard] = useState(false);
@@ -30,10 +32,9 @@ function App() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`${apiUrl}/slots?date=2099-12-31`)
-      .finally(() => {
-        if (!cancelled) setBackendReady(true);
-      });
+    fetch(`${apiUrl}/slots?date=2099-12-31`).finally(() => {
+      if (!cancelled) setBackendReady(true);
+    });
 
     return () => {
       cancelled = true;
@@ -57,6 +58,7 @@ function App() {
     setIsAdminLogged(false);
     setShowAdminLogin(false);
     setSelectedSlot(null);
+    setShowCalendar(false);
     setSelectedDate(null);
   };
 
@@ -65,6 +67,7 @@ function App() {
     setUserReservations([]);
     setShowUserDashboard(false);
     setShowUserLogin(false);
+    setShowCalendar(false);
     setSelectedDate(null);
     setSelectedSlot(null);
   };
@@ -79,9 +82,9 @@ function App() {
     }
   };
 
-  /* ---------------- CONDITIONAL RENDERING ---------------- */
+  /* ---------------- RENDER CONDIZIONALE ---------------- */
 
-  // Admin dashboard
+  // Admin area
   if (isAdminLogged) {
     return <AdminDashboard onLogout={handleLogoutAdmin} />;
   }
@@ -97,7 +100,7 @@ function App() {
     );
   }
 
-  // Backend loading
+  // Loading globale backend
   if (!backendReady) {
     return (
       <div style={{ padding: 20, textAlign: "center" }}>
@@ -123,7 +126,7 @@ function App() {
 
   // Admin login
   if (showAdminLogin) {
-    return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} onBack={() => setShowAdminLogin(false)} />;
+    return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
   }
 
   // User login
@@ -139,7 +142,7 @@ function App() {
     );
   }
 
-  // Reservation form
+  // Prenotazione specifica slot
   if (selectedSlot) {
     return (
       <ReservationForm
@@ -150,7 +153,7 @@ function App() {
     );
   }
 
-  // Slots list
+  // Visualizza slot dopo aver scelto il giorno
   if (selectedDate) {
     return (
       <SlotsList
@@ -161,14 +164,21 @@ function App() {
     );
   }
 
-  // Home
+  // Mostra il calendario
+  if (showCalendar) {
+    return <Calendar onDateSelect={setSelectedDate} />;
+  }
+
+  // Home principale
   return (
     <Home
       onBookClick={() => {
-        setSelectedDate(new Date());
+        setShowCalendar(true);
+        setSelectedDate(null);
         setSelectedSlot(null);
       }}
       onManageClick={() => setShowUserLogin(true)}
+      onAdminLoginClick={() => setShowAdminLogin(true)}
     />
   );
 }
