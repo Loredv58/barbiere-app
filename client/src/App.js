@@ -11,22 +11,12 @@ function App() {
   const [refresh, setRefresh] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [isAdminLogged, setIsAdminLogged] = useState(false);
-  const [backendReady, setBackendReady] = useState(false);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
   /* ---------------- WAKE UP BACKEND (solo una volta) ---------------- */
   useEffect(() => {
-    let cancelled = false;
-
-    fetch(`${apiUrl}/slots?date=2099-12-31`)
-      .finally(() => {
-        if (!cancelled) setBackendReady(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    fetch(`${apiUrl}/slots?date=2099-12-31`).catch(() => {});
   }, [apiUrl]);
 
   /* ---------------- CHECK LOGIN ADMIN ---------------- */
@@ -52,33 +42,6 @@ function App() {
     return <AdminDashboard onLogout={handleLogout} />;
   }
 
-  /* ---------------- LOADING GLOBALE ---------------- */
-  if (!backendReady) {
-    return (
-      <div style={{ padding: 20, textAlign: "center" }}>
-        <h2>Barbiere - Prenotazioni</h2>
-        {!backendReady && (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "#fff",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 16,
-      fontWeight: 500,
-      zIndex: 1000
-    }}
-  >
-    Connessione al server…
-  </div>
-)}
-
-      </div>
-    );
-  }
-
   /* ---------------- UI CLIENT ---------------- */
   return (
     <div style={{ padding: 20 }}>
@@ -100,6 +63,7 @@ function App() {
         />
       ) : (
         <>
+          {/* Calendar con preload dei 3 mesi */}
           <Calendar onDateSelect={setSelectedDate} />
 
           <SlotsList
