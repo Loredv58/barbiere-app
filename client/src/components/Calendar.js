@@ -24,6 +24,9 @@ function Calendar({ onDateSelect }) {
   const [daysStatus, setDaysStatus] = useState({});
   const [loadingDays, setLoadingDays] = useState(false);
 
+  // ✅ nuovo: indica se il calendario è pronto la prima volta
+  const [initialized, setInitialized] = useState(false);
+
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const maxMonth = new Date(today.getFullYear(), today.getMonth() + 2, 1);
@@ -41,6 +44,7 @@ function Calendar({ onDateSelect }) {
     // ✅ se già in cache → usa subito
     if (daysCache[cacheKey]) {
       setDaysStatus(daysCache[cacheKey]);
+      setInitialized(true);
       return;
     }
 
@@ -56,12 +60,24 @@ function Calendar({ onDateSelect }) {
         }));
         setDaysStatus(data);
         setLoadingDays(false);
+        setInitialized(true); // 👈 prima inizializzazione
       })
       .catch(err => {
         console.error(err);
         setLoadingDays(false);
+        setInitialized(true); // evita blocchi UI
       });
   }, [apiUrl, year, month, daysCache]);
+
+  /* 🧠 UX PROFESSIONALE:
+     non renderizzare il calendario finché non è pronto */
+  if (!initialized) {
+    return (
+      <p style={{ textAlign: "center", fontSize: 14 }}>
+        Preparazione calendario…
+      </p>
+    );
+  }
 
   function isDisabled(day) {
     if (loadingDays) return true;
@@ -69,9 +85,9 @@ function Calendar({ onDateSelect }) {
     const d = new Date(year, month, day);
     const weekday = d.getDay();
 
-    if (d < todayMidnight) return true;      // passato
+    if (d < todayMidnight) return true;           // passato
     if (weekday === 0 || weekday === 1) return true; // dom-lun
-    if (daysStatus[day] === false) return true; // giorno pieno
+    if (daysStatus[day] === false) return true;   // giorno pieno
 
     return false;
   }
@@ -171,5 +187,6 @@ function Calendar({ onDateSelect }) {
 }
 
 export default Calendar;
+
 
 
