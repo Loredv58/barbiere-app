@@ -13,10 +13,11 @@ function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [refresh, setRefresh] = useState(false);
 
-  // Modalità login / dashboard
+  // Admin login
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isAdminLogged, setIsAdminLogged] = useState(false);
 
+  // User login
   const [showUserLogin, setShowUserLogin] = useState(false);
   const [userReservations, setUserReservations] = useState([]);
   const [showUserDashboard, setShowUserDashboard] = useState(false);
@@ -45,6 +46,7 @@ function App() {
     if (token) setIsAdminLogged(true);
   }, []);
 
+  /* ---------------- HANDLER ---------------- */
   const handleReservationDone = () => {
     setSelectedSlot(null);
     setRefresh((r) => !r);
@@ -55,6 +57,7 @@ function App() {
     setIsAdminLogged(false);
     setShowAdminLogin(false);
     setSelectedSlot(null);
+    setSelectedDate(null);
   };
 
   const handleLogoutUser = () => {
@@ -62,6 +65,8 @@ function App() {
     setUserReservations([]);
     setShowUserDashboard(false);
     setShowUserLogin(false);
+    setSelectedDate(null);
+    setSelectedSlot(null);
   };
 
   const handleUserUpdate = (id, action, updatedData) => {
@@ -74,12 +79,14 @@ function App() {
     }
   };
 
-  /* ---------------- ADMIN DASHBOARD ---------------- */
+  /* ---------------- CONDITIONAL RENDERING ---------------- */
+
+  // Admin dashboard
   if (isAdminLogged) {
     return <AdminDashboard onLogout={handleLogoutAdmin} />;
   }
 
-  /* ---------------- USER DASHBOARD ---------------- */
+  // User dashboard
   if (showUserDashboard) {
     return (
       <UserDashboard
@@ -90,7 +97,7 @@ function App() {
     );
   }
 
-  /* ---------------- LOADING GLOBALE ---------------- */
+  // Backend loading
   if (!backendReady) {
     return (
       <div style={{ padding: 20, textAlign: "center" }}>
@@ -114,11 +121,12 @@ function App() {
     );
   }
 
-  /* ---------------- UI PRINCIPALE ---------------- */
+  // Admin login
   if (showAdminLogin) {
-    return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
+    return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} onBack={() => setShowAdminLogin(false)} />;
   }
 
+  // User login
   if (showUserLogin) {
     return (
       <UserLogin
@@ -131,6 +139,7 @@ function App() {
     );
   }
 
+  // Reservation form
   if (selectedSlot) {
     return (
       <ReservationForm
@@ -141,6 +150,7 @@ function App() {
     );
   }
 
+  // Slots list
   if (selectedDate) {
     return (
       <SlotsList
@@ -151,15 +161,14 @@ function App() {
     );
   }
 
-  /* ---------------- HOME PRINCIPALE ---------------- */
+  // Home
   return (
     <Home
-      onBook={() => {
-        setSelectedDate(null);
+      onBookClick={() => {
+        setSelectedDate(new Date());
         setSelectedSlot(null);
       }}
-      onManage={() => setShowUserLogin(true)}
-      onAdminLogin={() => setShowAdminLogin(true)}
+      onManageClick={() => setShowUserLogin(true)}
     />
   );
 }

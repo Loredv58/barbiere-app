@@ -18,12 +18,18 @@ function Home({ onBookClick, onManageClick }) {
         padding: 20
       }}
     >
-      <h1 style={{ fontSize: 32, marginBottom: 40, textShadow: "2px 2px 6px rgba(0,0,0,0.5)" }}>
+      <h1
+        style={{
+          fontSize: 32,
+          marginBottom: 40,
+          textShadow: "2px 2px 6px rgba(0,0,0,0.5)"
+        }}
+      >
         Fabio Villano Parrucchieri - Prenotazioni
       </h1>
 
       <button
-        onClick={onBookClick}
+        onClick={e => { e.preventDefault(); onBookClick(); }}
         style={{
           padding: "15px 30px",
           fontSize: 18,
@@ -34,14 +40,17 @@ function Home({ onBookClick, onManageClick }) {
           backgroundColor: "#f4c542",
           color: "#000",
           fontWeight: "bold",
-          boxShadow: "2px 2px 6px rgba(0,0,0,0.3)"
+          boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
+          transition: "transform 0.2s, box-shadow 0.2s"
         }}
+        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
       >
         Prenota Appuntamento
       </button>
 
       <button
-        onClick={onManageClick}
+        onClick={e => { e.preventDefault(); onManageClick(); }}
         style={{
           padding: "15px 30px",
           fontSize: 18,
@@ -52,8 +61,11 @@ function Home({ onBookClick, onManageClick }) {
           backgroundColor: "#fff",
           color: "#000",
           fontWeight: "bold",
-          boxShadow: "2px 2px 6px rgba(0,0,0,0.3)"
+          boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
+          transition: "transform 0.2s, box-shadow 0.2s"
         }}
+        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
+        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
       >
         Gestisci Appuntamento
       </button>
@@ -62,3 +74,4 @@ function Home({ onBookClick, onManageClick }) {
 }
 
 export default Home;
+
