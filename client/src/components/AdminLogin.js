@@ -60,7 +60,7 @@ function AdminLogin({ onLoginSuccess, onCancel }) {
             onClick={onCancel}
             style={{ marginLeft: 10 }}
           >
-            Torna indietro
+            Indietro
           </button>
         </div>
       </form>
