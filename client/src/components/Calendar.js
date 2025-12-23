@@ -166,13 +166,6 @@ function Calendar({ onDateSelect }) {
           );
         })}
       </div>
-
-      {/* LOADING SOLO LA PRIMA VOLTA */}
-      {loadingDays && (
-        <p style={{ textAlign: "center", marginTop: 10, fontSize: 12 }}>
-          Caricamento disponibilità…
-        </p>
-      )}
     </div>
   );
 }

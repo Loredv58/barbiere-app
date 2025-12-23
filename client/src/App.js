@@ -15,14 +15,21 @@ function App() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  /* ---------------- WAKE UP BACKEND ---------------- */
+  /* ---------------- WAKE UP BACKEND (solo una volta) ---------------- */
   useEffect(() => {
+    let cancelled = false;
+
     fetch(`${apiUrl}/slots?date=2099-12-31`)
-      .then(() => setBackendReady(true))
-      .catch(() => setBackendReady(true));
+      .finally(() => {
+        if (!cancelled) setBackendReady(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [apiUrl]);
 
-  /* ---------------- CHECK LOGIN ---------------- */
+  /* ---------------- CHECK LOGIN ADMIN ---------------- */
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
     if (token) setIsAdminLogged(true);
@@ -30,7 +37,7 @@ function App() {
 
   const handleReservationDone = () => {
     setSelectedSlot(null);
-    setRefresh(!refresh);
+    setRefresh(r => !r);
   };
 
   const handleLogout = () => {
@@ -40,12 +47,22 @@ function App() {
     setSelectedSlot(null);
   };
 
-  /* ---------------- ADMIN ---------------- */
+  /* ---------------- ADMIN AREA ---------------- */
   if (isAdminLogged) {
     return <AdminDashboard onLogout={handleLogout} />;
   }
 
-  /* ---------------- UI ---------------- */
+  /* ---------------- LOADING GLOBALE ---------------- */
+  if (!backendReady) {
+    return (
+      <div style={{ padding: 20, textAlign: "center" }}>
+        <h2>Barbiere - Prenotazioni</h2>
+        <p>Connessione al server in corso…</p>
+      </div>
+    );
+  }
+
+  /* ---------------- UI CLIENT ---------------- */
   return (
     <div style={{ padding: 20 }}>
       <h1>Barbiere - Prenotazioni</h1>
@@ -58,8 +75,6 @@ function App() {
 
       {showLogin ? (
         <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />
-      ) : !backendReady ? (
-        <p>Connessione al server in corso...</p>
       ) : selectedSlot ? (
         <ReservationForm
           selectedDate={selectedDate}
@@ -82,4 +97,5 @@ function App() {
 }
 
 export default App;
+
 
