@@ -63,7 +63,7 @@ function authenticateToken(req, res, next) {
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: "Token non valido" });
-    req.user = user;
+    req.user = user; // user: { username/email, role }
     next();
   });
 }
@@ -86,7 +86,6 @@ app.get("/slots", async (req, res) => {
   const occupied = data.map(r => r.time);
   let available = generateSlots().filter(s => !occupied.includes(s));
 
-  // 🔥 FILTRO ORARIO SEMPRE CORRETTO
   const now = new Date();
   const [y, m, d] = date.split("-").map(Number);
   const requestedDate = new Date(y, m - 1, d);
@@ -172,12 +171,32 @@ app.post("/admin/login", (req, res) => {
   if (username !== adminUser.username) return res.status(401).json({ message: "Utente non trovato" });
   if (!bcrypt.compareSync(password, adminUser.passwordHash)) return res.status(401).json({ message: "Password errata" });
 
-  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
+  const token = jwt.sign({ username, role: "admin" }, JWT_SECRET, { expiresIn: "1h" });
   res.json({ token });
 });
 
-// Visualizza prenotazioni (protetta)
+// Login utente (cliente)
+app.post("/user/login", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email mancante" });
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("email", email);
+
+  if (error) return res.status(500).json({ message: error.message });
+  if (data.length === 0) return res.status(404).json({ message: "Nessuna prenotazione trovata" });
+
+  const token = jwt.sign({ email, role: "user" }, JWT_SECRET, { expiresIn: "2h" });
+
+  res.json({ token, reservations: data });
+});
+
+// Visualizza prenotazioni admin (protetta)
 app.get("/reservations", authenticateToken, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ message: "Accesso negato" });
+
   const { data, error } = await supabase
     .from("reservations")
     .select("*")
@@ -191,6 +210,8 @@ app.get("/reservations", authenticateToken, async (req, res) => {
 
 // Esporta prenotazioni (protetta)
 app.get("/export-reservations", authenticateToken, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ message: "Accesso negato" });
+
   const { data: reservations, error } = await supabase
     .from("reservations")
     .select("*")
@@ -236,6 +257,73 @@ app.get("/admin/reservations", async (req, res) => {
   if (error) return res.status(500).json({ message: error.message });
 
   res.json(data);
+});
+
+/* ---------------- USER ROUTES ---------------- */
+
+// Recupera prenotazioni utente loggato
+app.get("/user/reservations", authenticateToken, async (req, res) => {
+  if (req.user.role !== "user") return res.status(403).json({ message: "Accesso negato" });
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("email", req.user.email)
+    .order("date", { ascending: true })
+    .order("time", { ascending: true });
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
+});
+
+// Modifica prenotazione utente
+app.put("/user/reservations/:id", authenticateToken, async (req, res) => {
+  if (req.user.role !== "user") return res.status(403).json({ message: "Accesso negato" });
+
+  const { id } = req.params;
+  const { date, time } = req.body;
+
+  const { data: exists, error: checkError } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("id", id)
+    .eq("email", req.user.email);
+
+  if (checkError) return res.status(500).json({ message: checkError.message });
+  if (exists.length === 0) return res.status(403).json({ message: "Non autorizzato" });
+
+  const { error } = await supabase
+    .from("reservations")
+    .update({ date, time })
+    .eq("id", id);
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json({ message: "Prenotazione aggiornata" });
+});
+
+// Cancella prenotazione utente
+app.delete("/user/reservations/:id", authenticateToken, async (req, res) => {
+  if (req.user.role !== "user") return res.status(403).json({ message: "Accesso negato" });
+
+  const { id } = req.params;
+
+  const { data: exists, error: checkError } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("id", id)
+    .eq("email", req.user.email);
+
+  if (checkError) return res.status(500).json({ message: checkError.message });
+  if (exists.length === 0) return res.status(403).json({ message: "Non autorizzato" });
+
+  const { error } = await supabase
+    .from("reservations")
+    .delete()
+    .eq("id", id);
+
+  if (error) return res.status(500).json({ message: error.message });
+
+  res.json({ message: "Prenotazione cancellata" });
 });
 
 /* ---------------- START ---------------- */
