@@ -35,6 +35,7 @@ function App() {
     setIsAdminLogged(false);
     setShowLogin(false);
     setSelectedSlot(null);
+    // ⚡ non resettiamo la cache → calendario rimane immediatamente disponibile
   };
 
   /* ---------------- ADMIN AREA ---------------- */
@@ -54,7 +55,10 @@ function App() {
       )}
 
       {showLogin ? (
-        <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />
+        <AdminLogin
+          onLoginSuccess={() => setIsAdminLogged(true)}
+          onCancel={() => setShowLogin(false)} // ← tasto “Torna indietro”
+        />
       ) : selectedSlot ? (
         <ReservationForm
           selectedDate={selectedDate}
@@ -78,5 +82,6 @@ function App() {
 }
 
 export default App;
+
 
 
