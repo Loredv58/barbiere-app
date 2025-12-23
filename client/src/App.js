@@ -138,24 +138,25 @@ function App() {
     );
   }
 
-  if (selectedSlot) {
-    return (
-      <ReservationForm
-        selectedDate={selectedDate}
-        selectedSlot={selectedSlot}
-        onReservationDone={handleReservationDone}
-      />
-    );
-  }
+if (selectedSlot)
+  return (
+    <ReservationForm
+      selectedDate={selectedDate}
+      selectedSlot={selectedSlot}
+      onReservationDone={handleReservationDone}
+      onBack={() => setSelectedSlot(null)}
+    />
+  );
 
-  if (selectedDate) {
-    return (
-      <SlotsList
-        key={refresh}
-        selectedDate={selectedDate}
-        onSelectSlot={setSelectedSlot}
-      />
-    );
+if (selectedDate)
+  return (
+    <SlotsList
+      selectedDate={selectedDate}
+      onSelectSlot={setSelectedSlot}
+      onBack={() => setSelectedDate(null)}
+    />
+  );
+
   }
 
   if (showCalendar) {

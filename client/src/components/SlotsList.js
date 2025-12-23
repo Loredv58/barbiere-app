@@ -12,98 +12,94 @@ function SlotsList({ selectedDate, onSelectSlot, onBack }) {
 
     setLoading(true);
     setError("");
-    setSlots([]);
 
     fetch(`${apiUrl}/slots?date=${selectedDate}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Errore nel caricamento degli slot");
+        if (!res.ok) throw new Error();
         return res.json();
       })
-      .then((data) => setSlots(Array.isArray(data) ? data : []))
-      .catch((err) => {
-        console.error(err);
-        setError("Errore nel recupero degli slot");
-      })
+      .then((data) => setSlots(data))
+      .catch(() => setError("Errore nel recupero degli slot"))
       .finally(() => setLoading(false));
   }, [apiUrl, selectedDate]);
-
-  if (!selectedDate) {
-    return <p>Seleziona prima una data dal calendario</p>;
-  }
 
   return (
     <div
       style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-        width: "100%",
-        minHeight: "70vh",
-        padding: 20,
+        minHeight: "100vh",
         backgroundImage: "url('/barber-bg.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
       }}
     >
       <div
         style={{
-          background: "rgba(255, 255, 255, 0.95)",
+          background: "rgba(255,255,255,0.95)",
           padding: 20,
           borderRadius: 12,
-          boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-          maxWidth: 400,
+          maxWidth: 420,
           width: "100%",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
         }}
       >
-        {/* Tasto indietro */}
-        {onBack && (
-          <button
-            onClick={onBack}
-            style={{
-              marginBottom: 10,
-              padding: "6px 12px",
-              borderRadius: 6,
-              border: "none",
-              backgroundColor: "#f4c542",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-          >
-            ← Torna indietro
-          </button>
-        )}
+        <button
+          onClick={onBack}
+          style={{
+            marginBottom: 10,
+            background: "#f4c542",
+            border: "none",
+            padding: "6px 12px",
+            borderRadius: 6,
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
+          ← Torna indietro
+        </button>
 
-        <h2>Slot disponibili per {selectedDate}</h2>
+        <h2 style={{ textAlign: "center" }}>
+          Slot disponibili<br />{selectedDate}
+        </h2>
 
-        {loading && <p>Caricamento slot...</p>}
+        {loading && <p style={{ textAlign: "center" }}>Caricamento slot…</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
-        {!loading && !error && slots.length === 0 && <p>Nessuno slot disponibile</p>}
-        {!loading && !error && slots.length > 0 && (
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            {slots.map((slot, index) => (
-              <li key={index} style={{ marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>{slot}</span>
-                <button
-                  onClick={() => onSelectSlot(slot)}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    border: "none",
-                    backgroundColor: "#f4c542",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                  }}
-                >
-                  Prenota
-                </button>
-              </li>
-            ))}
-          </ul>
+
+        {!loading && slots.length === 0 && (
+          <p style={{ textAlign: "center" }}>Nessuno slot disponibile</p>
         )}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))",
+            gap: 10,
+            marginTop: 15,
+          }}
+        >
+          {slots.map((slot) => (
+            <button
+              key={slot}
+              onClick={() => onSelectSlot(slot)}
+              style={{
+                padding: 10,
+                borderRadius: 6,
+                border: "1px solid #ccc",
+                background: "#fff",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              {slot}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
 export default SlotsList;
-
