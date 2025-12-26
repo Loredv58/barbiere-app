@@ -39,8 +39,16 @@ function App() {
     const today = new Date();
     const preloadMonths = [0, 1, 2]; // mese corrente + 2 successivi
 
-    // Wake-up backend (non bloccante)
-    fetch(`${apiUrl}/slots?date=2099-12-31`).catch(() => {});
+    // Funzione wake-up
+    const wakeUpBackend = () => {
+      fetch(`${apiUrl}/slots?date=2099-12-31`).catch(() => {});
+    };
+
+    // Ping periodico ogni 10 minuti per mantenere backend attivo
+    const interval = setInterval(() => wakeUpBackend(), 10 * 60 * 1000);
+
+    // Esegui wake-up iniziale
+    wakeUpBackend();
 
     // Preload giorni calendario
     Promise.all(
@@ -61,8 +69,34 @@ function App() {
       }
     });
 
+    // Preload slot per oggi e domani
+    const preloadSlots = async () => {
+      const dates = [
+        today.toISOString().slice(0, 10),
+        new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+          .toISOString()
+          .slice(0, 10),
+      ];
+
+      for (const date of dates) {
+        try {
+          const res = await fetch(`${apiUrl}/slots?date=${date}`);
+          const data = await res.json();
+          setSlotsCache((prev) => ({
+            ...prev,
+            [date]: Array.isArray(data) ? data : [],
+          }));
+        } catch {
+          setSlotsCache((prev) => ({ ...prev, [date]: [] }));
+        }
+      }
+    };
+
+    preloadSlots();
+
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, [apiUrl]);
 
@@ -73,7 +107,6 @@ function App() {
   }, []);
 
   /* ---------------- HANDLER ---------------- */
-
   const handleDateSelect = async (date) => {
     setSelectedDate(date);
     setSelectedSlot(null);
@@ -90,10 +123,7 @@ function App() {
         [date]: Array.isArray(data) ? data : [],
       }));
     } catch {
-      setSlotsCache((prev) => ({
-        ...prev,
-        [date]: [],
-      }));
+      setSlotsCache((prev) => ({ ...prev, [date]: [] }));
     }
   };
 
@@ -132,12 +162,9 @@ function App() {
   };
 
   /* ---------------- RENDER ---------------- */
+  if (isAdminLogged) return <AdminDashboard onLogout={handleLogoutAdmin} />;
 
-  if (isAdminLogged) {
-    return <AdminDashboard onLogout={handleLogoutAdmin} />;
-  }
-
-  if (showUserDashboard) {
+  if (showUserDashboard)
     return (
       <UserDashboard
         reservations={userReservations}
@@ -145,13 +172,10 @@ function App() {
         onUpdateReservation={handleUserUpdate}
       />
     );
-  }
 
-  if (showAdminLogin) {
-    return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
-  }
+  if (showAdminLogin) return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
 
-  if (showUserLogin) {
+  if (showUserLogin)
     return (
       <UserLogin
         onLoginSuccess={(reservations) => {
@@ -161,9 +185,8 @@ function App() {
         onBack={() => setShowUserLogin(false)}
       />
     );
-  }
 
-  if (selectedSlot) {
+  if (selectedSlot)
     return (
       <ReservationForm
         selectedDate={selectedDate}
@@ -172,9 +195,8 @@ function App() {
         onBack={() => setSelectedSlot(null)}
       />
     );
-  }
 
-  if (selectedDate) {
+  if (selectedDate)
     return (
       <SlotsList
         selectedDate={selectedDate}
@@ -184,9 +206,8 @@ function App() {
         onBack={() => setSelectedDate(null)}
       />
     );
-  }
 
-  if (showCalendar) {
+  if (showCalendar)
     return (
       <>
         <Calendar
@@ -214,7 +235,6 @@ function App() {
         )}
       </>
     );
-  }
 
   return (
     <>
@@ -250,3 +270,4 @@ function App() {
 }
 
 export default App;
+

@@ -66,6 +66,7 @@ function SlotsList({
           maxWidth: 420,
           width: "100%",
           boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+          textAlign: "center",
         }}
       >
         {/* 🔙 BACK */}
@@ -84,13 +85,37 @@ function SlotsList({
           ← Torna indietro
         </button>
 
-        <h2 style={{ textAlign: "center", marginBottom: 15 }}>
+        <h2 style={{ marginBottom: 15 }}>
           Slot disponibili<br />
           <small>{selectedDate}</small>
         </h2>
 
         {loading && (
-          <p style={{ textAlign: "center" }}>Caricamento slot…</p>
+          <div style={{ margin: "20px 0" }}>
+            {/* Spinner elegante */}
+            <div
+              style={{
+                border: "4px solid #f3f3f3",
+                borderTop: "4px solid #f4c542",
+                borderRadius: "50%",
+                width: 40,
+                height: 40,
+                animation: "spin 1s linear infinite",
+                margin: "0 auto",
+              }}
+            />
+            <style>
+              {`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}
+            </style>
+            <p style={{ marginTop: 10, fontSize: 14, opacity: 0.7 }}>
+              Caricamento slot…
+            </p>
+          </div>
         )}
 
         {error && (
@@ -98,9 +123,7 @@ function SlotsList({
         )}
 
         {!loading && slots.length === 0 && (
-          <p style={{ textAlign: "center" }}>
-            Nessuno slot disponibile
-          </p>
+          <p style={{ textAlign: "center" }}>Nessuno slot disponibile</p>
         )}
 
         <div
@@ -124,12 +147,8 @@ function SlotsList({
                 fontWeight: "bold",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#f4c542")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "#fff")
-              }
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f4c542")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
             >
               {slot}
             </button>
@@ -141,4 +160,3 @@ function SlotsList({
 }
 
 export default SlotsList;
-
