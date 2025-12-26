@@ -16,8 +16,9 @@ function App() {
   // Home → calendario
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // Cache calendario
+  // Cache calendario e slot
   const [calendarCache, setCalendarCache] = useState({});
+  const [slotsCache, setSlotsCache] = useState({});
 
   // Login / dashboard
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -72,6 +73,30 @@ function App() {
   }, []);
 
   /* ---------------- HANDLER ---------------- */
+
+  const handleDateSelect = async (date) => {
+    setSelectedDate(date);
+    setSelectedSlot(null);
+
+    // Se gli slot sono già in cache → istantaneo
+    if (slotsCache[date]) return;
+
+    try {
+      const res = await fetch(`${apiUrl}/slots?date=${date}`);
+      const data = await res.json();
+
+      setSlotsCache((prev) => ({
+        ...prev,
+        [date]: Array.isArray(data) ? data : [],
+      }));
+    } catch {
+      setSlotsCache((prev) => ({
+        ...prev,
+        [date]: [],
+      }));
+    }
+  };
+
   const handleReservationDone = () => {
     setSelectedSlot(null);
     setRefresh((r) => !r);
@@ -138,30 +163,34 @@ function App() {
     );
   }
 
-if (selectedSlot)
-  return (
-    <ReservationForm
-      selectedDate={selectedDate}
-      selectedSlot={selectedSlot}
-      onReservationDone={handleReservationDone}
-      onBack={() => setSelectedSlot(null)}
-    />
-  );
+  if (selectedSlot) {
+    return (
+      <ReservationForm
+        selectedDate={selectedDate}
+        selectedSlot={selectedSlot}
+        onReservationDone={handleReservationDone}
+        onBack={() => setSelectedSlot(null)}
+      />
+    );
+  }
 
-if (selectedDate)
-  return (
-    <SlotsList
-      selectedDate={selectedDate}
-      onSelectSlot={setSelectedSlot}
-      onBack={() => setSelectedDate(null)}
-    />
-  );
+  if (selectedDate) {
+    return (
+      <SlotsList
+        selectedDate={selectedDate}
+        slotsCache={slotsCache}
+        setSlotsCache={setSlotsCache}
+        onSelectSlot={setSelectedSlot}
+        onBack={() => setSelectedDate(null)}
+      />
+    );
+  }
 
   if (showCalendar) {
     return (
       <>
         <Calendar
-          onDateSelect={setSelectedDate}
+          onDateSelect={handleDateSelect}
           onBack={() => setShowCalendar(false)}
           preloadedDays={calendarCache}
         />
@@ -221,4 +250,3 @@ if (selectedDate)
 }
 
 export default App;
-

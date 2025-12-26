@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 
-function SlotsList({ selectedDate, onSelectSlot, onBack }) {
+function SlotsList({
+  selectedDate,
+  onSelectSlot,
+  onBack,
+  slotsCache,
+  setSlotsCache,
+}) {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -10,6 +16,13 @@ function SlotsList({ selectedDate, onSelectSlot, onBack }) {
   useEffect(() => {
     if (!selectedDate) return;
 
+    // ✅ SLOT GIÀ IN CACHE → USALI SUBITO
+    if (slotsCache[selectedDate]) {
+      setSlots(slotsCache[selectedDate]);
+      return;
+    }
+
+    // ❌ ALTRIMENTI FETCH (una sola volta)
     setLoading(true);
     setError("");
 
@@ -18,10 +31,19 @@ function SlotsList({ selectedDate, onSelectSlot, onBack }) {
         if (!res.ok) throw new Error();
         return res.json();
       })
-      .then((data) => setSlots(data))
+      .then((data) => {
+        const safeData = Array.isArray(data) ? data : [];
+        setSlots(safeData);
+
+        // 🔹 salva in cache
+        setSlotsCache((prev) => ({
+          ...prev,
+          [selectedDate]: safeData,
+        }));
+      })
       .catch(() => setError("Errore nel recupero degli slot"))
       .finally(() => setLoading(false));
-  }, [apiUrl, selectedDate]);
+  }, [apiUrl, selectedDate, slotsCache, setSlotsCache]);
 
   return (
     <div
@@ -38,21 +60,22 @@ function SlotsList({ selectedDate, onSelectSlot, onBack }) {
     >
       <div
         style={{
-          background: "rgba(255,255,255,0.95)",
+          background: "rgba(255,255,255,0.96)",
           padding: 20,
-          borderRadius: 12,
+          borderRadius: 14,
           maxWidth: 420,
           width: "100%",
-          boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+          boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
         }}
       >
+        {/* 🔙 BACK */}
         <button
           onClick={onBack}
           style={{
-            marginBottom: 10,
+            marginBottom: 12,
             background: "#f4c542",
             border: "none",
-            padding: "6px 12px",
+            padding: "6px 14px",
             borderRadius: 6,
             fontWeight: "bold",
             cursor: "pointer",
@@ -61,15 +84,23 @@ function SlotsList({ selectedDate, onSelectSlot, onBack }) {
           ← Torna indietro
         </button>
 
-        <h2 style={{ textAlign: "center" }}>
-          Slot disponibili<br />{selectedDate}
+        <h2 style={{ textAlign: "center", marginBottom: 15 }}>
+          Slot disponibili<br />
+          <small>{selectedDate}</small>
         </h2>
 
-        {loading && <p style={{ textAlign: "center" }}>Caricamento slot…</p>}
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {loading && (
+          <p style={{ textAlign: "center" }}>Caricamento slot…</p>
+        )}
+
+        {error && (
+          <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+        )}
 
         {!loading && slots.length === 0 && (
-          <p style={{ textAlign: "center" }}>Nessuno slot disponibile</p>
+          <p style={{ textAlign: "center" }}>
+            Nessuno slot disponibile
+          </p>
         )}
 
         <div
@@ -85,13 +116,20 @@ function SlotsList({ selectedDate, onSelectSlot, onBack }) {
               key={slot}
               onClick={() => onSelectSlot(slot)}
               style={{
-                padding: 10,
-                borderRadius: 6,
+                padding: "10px 0",
+                borderRadius: 8,
                 border: "1px solid #ccc",
                 background: "#fff",
                 cursor: "pointer",
                 fontWeight: "bold",
+                transition: "all 0.2s",
               }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#f4c542")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "#fff")
+              }
             >
               {slot}
             </button>
@@ -103,3 +141,4 @@ function SlotsList({ selectedDate, onSelectSlot, onBack }) {
 }
 
 export default SlotsList;
+
