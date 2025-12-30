@@ -170,7 +170,7 @@ function App() {
       <ReservationForm
         selectedDate={selectedDate}
         selectedSlot={selectedSlot}
-        serviceType={selectedService}
+        selectedService={selectedService}
         onReservationDone={handleReservationDone}
         onBack={() => setSelectedSlot(null)}
       />
