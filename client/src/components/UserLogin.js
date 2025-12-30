@@ -15,7 +15,6 @@ function UserLogin({ onLoginSuccess, onBack }) {
 
     try {
       const res = await axios.post(`${apiUrl}/user/login`, { email });
-      // res.data.token e res.data.reservations
       localStorage.setItem("userToken", res.data.token);
       onLoginSuccess(res.data.reservations);
     } catch (err) {
@@ -26,26 +25,83 @@ function UserLogin({ onLoginSuccess, onBack }) {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "40px auto", textAlign: "center" }}>
-      <h2>Login Utente</h2>
-      <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <input
-          type="email"
-          placeholder="Inserisci la tua email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Caricamento..." : "Accedi"}
-        </button>
-        <button type="button" onClick={onBack} style={{ marginTop: 10 }}>
-          Torna indietro
-        </button>
-      </form>
-      {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundImage: "url('/barber-bg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          background: "rgba(255,255,255,0.95)",
+          padding: 30,
+          borderRadius: 12,
+          maxWidth: 400,
+          width: "100%",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+          textAlign: "center",
+        }}
+      >
+        <h2 style={{ marginBottom: 20 }}>Login Utente</h2>
+        <form onSubmit={handleLogin} style={{ display: "grid", gap: 15 }}>
+          <input
+            type="email"
+            placeholder="Inserisci la tua email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              padding: 10,
+              borderRadius: 6,
+              border: "1px solid #ccc",
+              fontSize: 16,
+            }}
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: 12,
+              borderRadius: 6,
+              border: "none",
+              backgroundColor: "#f4c542",
+              color: "#000",
+              fontWeight: "bold",
+              fontSize: 16,
+              cursor: "pointer",
+            }}
+          >
+            {loading ? "Caricamento..." : "Accedi"}
+          </button>
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: 10,
+              borderRadius: 6,
+              border: "none",
+              backgroundColor: "#333",
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: 14,
+              cursor: "pointer",
+              marginTop: 5,
+            }}
+          >
+            Torna indietro
+          </button>
+        </form>
+        {error && <p style={{ color: "red", marginTop: 15 }}>{error}</p>}
+      </div>
     </div>
   );
 }
 
 export default UserLogin;
+
