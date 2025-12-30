@@ -7,14 +7,19 @@ import AdminDashboard from "./components/AdminDashboard";
 import UserLogin from "./components/UserLogin";
 import UserDashboard from "./components/UserDashboard";
 import Home from "./components/Home";
+import ServiceSelect from "./components/ServiceSelect";
 
 function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [refresh, setRefresh] = useState(false);
 
-  // Home → calendario
+  // Home → service select → calendario
+  const [showServiceSelect, setShowServiceSelect] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+
+  // Scelta servizio
+  const [selectedService, setSelectedService] = useState(null); // "taglio" | "taglio_barba"
 
   // Cache calendario e slot
   const [calendarCache, setCalendarCache] = useState({});
@@ -33,24 +38,19 @@ function App() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  /* ---------------- WAKE UP BACKEND + PRELOAD CALENDARIO ---------------- */
+  /* ---------------- WAKE UP BACKEND + PRELOAD ---------------- */
   useEffect(() => {
     let cancelled = false;
     const today = new Date();
-    const preloadMonths = [0, 1, 2]; // mese corrente + 2 successivi
+    const preloadMonths = [0, 1, 2];
 
-    // Funzione wake-up
     const wakeUpBackend = () => {
       fetch(`${apiUrl}/slots?date=2099-12-31`).catch(() => {});
     };
 
-    // Ping periodico ogni 10 minuti per mantenere backend attivo
-    const interval = setInterval(() => wakeUpBackend(), 10 * 60 * 1000);
-
-    // Esegui wake-up iniziale
     wakeUpBackend();
+    const interval = setInterval(wakeUpBackend, 10 * 60 * 1000);
 
-    // Preload giorni calendario
     Promise.all(
       preloadMonths.map((offset) => {
         const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
@@ -69,31 +69,6 @@ function App() {
       }
     });
 
-    // Preload slot per oggi e domani
-    const preloadSlots = async () => {
-      const dates = [
-        today.toISOString().slice(0, 10),
-        new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
-          .toISOString()
-          .slice(0, 10),
-      ];
-
-      for (const date of dates) {
-        try {
-          const res = await fetch(`${apiUrl}/slots?date=${date}`);
-          const data = await res.json();
-          setSlotsCache((prev) => ({
-            ...prev,
-            [date]: Array.isArray(data) ? data : [],
-          }));
-        } catch {
-          setSlotsCache((prev) => ({ ...prev, [date]: [] }));
-        }
-      }
-    };
-
-    preloadSlots();
-
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -111,13 +86,11 @@ function App() {
     setSelectedDate(date);
     setSelectedSlot(null);
 
-    // Se gli slot sono già in cache → istantaneo
     if (slotsCache[date]) return;
 
     try {
       const res = await fetch(`${apiUrl}/slots?date=${date}`);
       const data = await res.json();
-
       setSlotsCache((prev) => ({
         ...prev,
         [date]: Array.isArray(data) ? data : [],
@@ -137,8 +110,10 @@ function App() {
     setIsAdminLogged(false);
     setShowAdminLogin(false);
     setShowCalendar(false);
+    setShowServiceSelect(false);
     setSelectedDate(null);
     setSelectedSlot(null);
+    setSelectedService(null);
   };
 
   const handleLogoutUser = () => {
@@ -147,8 +122,10 @@ function App() {
     setShowUserDashboard(false);
     setShowUserLogin(false);
     setShowCalendar(false);
+    setShowServiceSelect(false);
     setSelectedDate(null);
     setSelectedSlot(null);
+    setSelectedService(null);
   };
 
   const handleUserUpdate = (id, action, updatedData) => {
@@ -162,6 +139,7 @@ function App() {
   };
 
   /* ---------------- RENDER ---------------- */
+
   if (isAdminLogged) return <AdminDashboard onLogout={handleLogoutAdmin} />;
 
   if (showUserDashboard)
@@ -173,7 +151,8 @@ function App() {
       />
     );
 
-  if (showAdminLogin) return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
+  if (showAdminLogin)
+    return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
 
   if (showUserLogin)
     return (
@@ -191,6 +170,7 @@ function App() {
       <ReservationForm
         selectedDate={selectedDate}
         selectedSlot={selectedSlot}
+        serviceType={selectedService}
         onReservationDone={handleReservationDone}
         onBack={() => setSelectedSlot(null)}
       />
@@ -236,11 +216,28 @@ function App() {
       </>
     );
 
+  if (showServiceSelect)
+    return (
+      <ServiceSelect
+        onSelect={(service) => {
+          setSelectedService(service);
+          setShowServiceSelect(false);
+          setShowCalendar(true);
+        }}
+        onBack={() => {
+          setShowServiceSelect(false);
+          setSelectedService(null);
+        }}
+      />
+    );
+
   return (
     <>
       <Home
         onBookClick={() => {
-          setShowCalendar(true);
+          setShowServiceSelect(true);
+          setShowCalendar(false);
+          setSelectedService(null);
           setSelectedDate(null);
           setSelectedSlot(null);
         }}
@@ -270,4 +267,3 @@ function App() {
 }
 
 export default App;
-

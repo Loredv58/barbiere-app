@@ -3,6 +3,7 @@ import React, { useState } from "react";
 function ReservationForm({
   selectedDate,
   selectedSlot,
+  selectedService,
   onReservationDone,
   onBack,
 }) {
@@ -28,6 +29,7 @@ function ReservationForm({
         ...form,
         date: selectedDate,
         time: selectedSlot,
+        service: selectedService, // ✅ NUOVO CAMPO
       }),
     });
 
@@ -37,6 +39,9 @@ function ReservationForm({
     alert("Prenotazione confermata!");
     onReservationDone();
   };
+
+  const serviceLabel =
+    selectedService === "taglio_barba" ? "Taglio + Barba" : "Taglio";
 
   return (
     <div
@@ -77,15 +82,50 @@ function ReservationForm({
         </button>
 
         <h2 style={{ textAlign: "center" }}>
-          Prenota<br />
-          {selectedDate} – {selectedSlot}
+          Prenota
         </h2>
 
+        {/* 📋 RIEPILOGO */}
+        <div
+          style={{
+            background: "#f7f7f7",
+            padding: 10,
+            borderRadius: 8,
+            marginBottom: 12,
+            fontSize: 14,
+          }}
+        >
+          <p><strong>Servizio:</strong> {serviceLabel}</p>
+          <p><strong>Data:</strong> {selectedDate}</p>
+          <p><strong>Orario:</strong> {selectedSlot}</p>
+        </div>
+
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
-          <input name="name" placeholder="Nome" required onChange={handleChange} />
-          <input name="surname" placeholder="Cognome" required onChange={handleChange} />
-          <input name="email" type="email" placeholder="Email" required onChange={handleChange} />
-          <input name="phone" placeholder="Telefono" required onChange={handleChange} />
+          <input
+            name="name"
+            placeholder="Nome"
+            required
+            onChange={handleChange}
+          />
+          <input
+            name="surname"
+            placeholder="Cognome"
+            required
+            onChange={handleChange}
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            required
+            onChange={handleChange}
+          />
+          <input
+            name="phone"
+            placeholder="Telefono"
+            required
+            onChange={handleChange}
+          />
 
           <button
             type="submit"
@@ -108,4 +148,5 @@ function ReservationForm({
 }
 
 export default ReservationForm;
+
 

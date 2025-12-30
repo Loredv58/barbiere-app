@@ -108,10 +108,13 @@ app.get("/slots", async (req, res) => {
 
 // Prenotazione
 app.post("/reserve", async (req, res) => {
-  const { name, surname, email, phone, date, time } = req.body;
+  const { name, surname, email, phone, date, time, service } = req.body;
 
-  if (!name || !surname || !email || !phone || !date || !time)
+  if (!name || !surname || !email || !phone || !date || !time || !service)
     return res.status(400).json({ message: "Dati mancanti" });
+
+  if (!["taglio", "taglio_barba"].includes(service))
+    return res.status(400).json({ message: "Servizio non valido" });
 
   if (!isWorkingDay(date)) return res.status(400).json({ message: "Giorno non lavorativo" });
 
@@ -126,7 +129,7 @@ app.post("/reserve", async (req, res) => {
 
   const { error } = await supabase
     .from("reservations")
-    .insert([{ name, surname, email, phone, date, time }]);
+    .insert([{ name, surname, email, phone, date, time, service }]);
 
   if (error) return res.status(500).json({ message: error.message });
 
@@ -250,7 +253,7 @@ app.get("/admin/reservations", async (req, res) => {
 
   const { data, error } = await supabase
     .from("reservations")
-    .select("name, surname, email, phone, date, time")
+    .select("name, surname, email, phone, date, time, service")
     .eq("date", date)
     .order("time", { ascending: true });
 
@@ -329,3 +332,4 @@ app.delete("/user/reservations/:id", authenticateToken, async (req, res) => {
 /* ---------------- START ---------------- */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log("Server avviato su porta " + PORT));
+
