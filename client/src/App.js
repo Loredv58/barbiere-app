@@ -100,10 +100,18 @@ function App() {
     }
   };
 
-  const handleReservationDone = () => {
-    setSelectedSlot(null);
-    setRefresh((r) => !r);
-  };
+const handleReservationDone = () => {
+  setSelectedSlot(null);
+
+  setSlotsCache((prev) => {
+    if (!selectedDate || !selectedSlot) return prev;
+    const updatedSlots = prev[selectedDate]?.filter((s) => s !== selectedSlot) || [];
+    return { ...prev, [selectedDate]: updatedSlots };
+  });
+
+  setRefresh((r) => !r);
+};
+
 
   const handleLogoutAdmin = () => {
     localStorage.removeItem("adminToken");
