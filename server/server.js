@@ -224,8 +224,19 @@ app.get("/export-reservations", authenticateToken, async (req, res) => {
   if (error) return res.status(500).json({ message: error.message });
   if (reservations.length === 0) return res.status(400).send("Nessuna prenotazione");
 
+  // ✅ Mappa i servizi in label leggibili
+  const reservationsForExcel = reservations.map(r => ({
+    Nome: r.name,
+    Cognome: r.surname,
+    Email: r.email,
+    Telefono: r.phone,
+    Data: r.date,
+    Orario: r.time,
+    Servizio: r.service === "taglio_barba" ? "Taglio + Barba" : "Taglio"
+  }));
+
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(reservations);
+  const ws = XLSX.utils.json_to_sheet(reservationsForExcel);
   XLSX.utils.book_append_sheet(wb, ws, "Prenotazioni");
 
   const filePath = path.join(__dirname, "prenotazioni.xlsx");

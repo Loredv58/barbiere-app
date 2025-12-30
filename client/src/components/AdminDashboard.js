@@ -69,6 +69,12 @@ function AdminDashboard({ onLogout }) {
     onLogout();
   };
 
+  const formatService = (service) => {
+    if (service === "taglio_barba") return "Taglio + Barba";
+    if (service === "taglio") return "Taglio";
+    return "-";
+  };
+
   return (
     <div style={{ marginTop: "20px" }}>
       <h2>Dashboard Proprietario</h2>
@@ -107,6 +113,7 @@ function AdminDashboard({ onLogout }) {
               <th>Telefono</th>
               <th>Data</th>
               <th>Orario</th>
+              <th>Servizio</th> {/* ✅ Nuova colonna */}
             </tr>
           </thead>
           <tbody>
@@ -119,11 +126,12 @@ function AdminDashboard({ onLogout }) {
                   <td>{r.phone}</td>
                   <td>{formatDate(r.date)}</td>
                   <td>{r.time}</td>
+                  <td>{formatService(r.service)}</td> {/* ✅ Mostra servizio */}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" style={{ textAlign: "center" }}>
+                <td colSpan="7" style={{ textAlign: "center" }}>
                   Nessuna prenotazione disponibile
                 </td>
               </tr>
