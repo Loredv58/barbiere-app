@@ -159,8 +159,14 @@ const handleReservationDone = () => {
       />
     );
 
-  if (showAdminLogin)
-    return <AdminLogin onLoginSuccess={() => setIsAdminLogged(true)} />;
+if (showAdminLogin)
+  return (
+    <AdminLogin
+      onLoginSuccess={() => setIsAdminLogged(true)}
+      onBack={() => setShowAdminLogin(false)}
+    />
+  );
+
 
   if (showUserLogin)
     return (
