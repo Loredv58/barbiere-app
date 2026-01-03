@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function AdminLogin({ onLoginSuccess, onCancel }) {
+function AdminLogin({ onLoginSuccess, onBack }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
