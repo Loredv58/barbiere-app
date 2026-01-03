@@ -79,7 +79,7 @@ function Home({ onBookClick, onManageClick, onAdminLoginClick }) {
           boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
         }}
       >
-        Login Proprietario
+        Login Admin
       </button>
     </div>
   );

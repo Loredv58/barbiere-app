@@ -100,7 +100,7 @@ function Calendar({ onDateSelect, onBack, preloadedDays = {} }) {
               cursor: "pointer",
             }}
           >
-            ← Torna indietro
+            ← Indietro
           </button>
         )}
 
