@@ -98,19 +98,19 @@ function AdminLogin({ onLoginSuccess, onCancel }) {
         </button>
 
         <button
-          type="button"
-          onClick={onCancel}
-          style={{
-            padding: "12px 20px",
-            backgroundColor: "#fff",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer",
-            fontSize: 16,
-            marginTop: 5,
-            boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
-          }}
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: 10,
+              borderRadius: 6,
+              border: "none",
+              backgroundColor: "#333",
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: 14,
+              cursor: "pointer",
+              marginTop: 5,
+            }}
         >
           Indietro
         </button>

@@ -38,7 +38,7 @@ function ServiceSelect({ onSelect, onBack }) {
             cursor: "pointer",
           }}
         >
-          ← Torna indietro
+          ← Indietro
         </button>
 
         <h2 style={{ marginBottom: 10 }}>Scegli il servizio</h2>

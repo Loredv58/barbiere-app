@@ -78,7 +78,7 @@ function ReservationForm({
             cursor: "pointer",
           }}
         >
-          ← Torna indietro
+          ← Indietro
         </button>
 
         <h2 style={{ textAlign: "center" }}>
