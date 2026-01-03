@@ -82,7 +82,7 @@ function SlotsList({
             cursor: "pointer",
           }}
         >
-          ← Torna indietro
+          ← Indietro
         </button>
 
         <h2 style={{ marginBottom: 15 }}>

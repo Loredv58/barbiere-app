@@ -6,6 +6,25 @@ function AdminLogin({ onLoginSuccess, onBack }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const inputStyle = {
+    padding: "12px",
+    fontSize: 15,
+    borderRadius: 8,
+    border: "1px solid #ccc",
+    width: "100%",
+    boxSizing: "border-box",
+  };
+
+  const buttonStyle = {
+    padding: "12px",
+    fontSize: 15,
+    borderRadius: 8,
+    border: "none",
+    fontWeight: "bold",
+    cursor: "pointer",
+    width: "100%",
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -50,17 +69,19 @@ function AdminLogin({ onLoginSuccess, onBack }) {
         onSubmit={handleSubmit}
         style={{
           background: "rgba(255,255,255,0.95)",
-          padding: 20,
+          padding: 24,
           borderRadius: 12,
           maxWidth: 400,
           width: "100%",
           boxShadow: "2px 2px 10px rgba(0,0,0,0.3)",
           display: "flex",
           flexDirection: "column",
-          gap: 10,
+          gap: 12,
         }}
       >
-        <h2 style={{ textAlign: "center" }}>Login Admin</h2>
+        <h2 style={{ textAlign: "center", marginBottom: 10 }}>
+          Login Proprietario
+        </h2>
 
         <input
           type="text"
@@ -68,6 +89,7 @@ function AdminLogin({ onLoginSuccess, onBack }) {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
+          style={inputStyle}
         />
 
         <input
@@ -76,21 +98,18 @@ function AdminLogin({ onLoginSuccess, onBack }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          style={inputStyle}
         />
 
-        {error && <p style={{ color: "red", marginTop: 5 }}>{error}</p>}
+        {error && <p style={{ color: "red", fontSize: 14 }}>{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
           style={{
-            padding: "12px 20px",
+            ...buttonStyle,
             backgroundColor: "#f4c542",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: "bold",
-            cursor: "pointer",
-            fontSize: 16,
+            color: "#000",
             boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
           }}
         >
@@ -98,19 +117,13 @@ function AdminLogin({ onLoginSuccess, onBack }) {
         </button>
 
         <button
-            type="button"
-            onClick={onBack}
-            style={{
-              padding: 10,
-              borderRadius: 6,
-              border: "none",
-              backgroundColor: "#333",
-              color: "#fff",
-              fontWeight: "bold",
-              fontSize: 14,
-              cursor: "pointer",
-              marginTop: 5,
-            }}
+          type="button"
+          onClick={onBack}
+          style={{
+            ...buttonStyle,
+            backgroundColor: "#333",
+            color: "#fff",
+          }}
         >
           Indietro
         </button>
@@ -120,3 +133,4 @@ function AdminLogin({ onLoginSuccess, onBack }) {
 }
 
 export default AdminLogin;
+
