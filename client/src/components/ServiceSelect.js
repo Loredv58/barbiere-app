@@ -1,10 +1,35 @@
 import React from "react";
 
 function ServiceSelect({ onSelect, onBack }) {
+  const buttonStyle = {
+    width: "100%",
+    padding: "14px",
+    fontSize: 15,
+    borderRadius: 8,
+    border: "2px solid #000",
+    fontWeight: "bold",
+    cursor: "pointer",
+    backgroundColor: "#fff",
+    transition: "background-color 0.2s",
+  };
+
+  const backButtonStyle = {
+    padding: "10px",
+    fontSize: 14,
+    borderRadius: 8,
+    border: "none",
+    backgroundColor: "#333",
+    color: "#fff",
+    fontWeight: "bold",
+    cursor: "pointer",
+    width: "100%",
+  };
+
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
+        width: "100%",
         backgroundImage: "url('/barber-bg.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -16,81 +41,55 @@ function ServiceSelect({ onSelect, onBack }) {
     >
       <div
         style={{
-          background: "rgba(255,255,255,0.96)",
-          padding: 25,
-          borderRadius: 16,
-          maxWidth: 420,
+          background: "rgba(255,255,255,0.95)",
+          padding: 24,
+          borderRadius: 12,
+          maxWidth: 400,
           width: "100%",
-          boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+          boxShadow: "2px 2px 10px rgba(0,0,0,0.3)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
           textAlign: "center",
         }}
       >
-        {/* 🔙 BACK */}
-        <button
-          onClick={onBack}
-          style={{
-            marginBottom: 15,
-            background: "#f4c542",
-            border: "none",
-            padding: "6px 14px",
-            borderRadius: 6,
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
-          ← Indietro
-        </button>
-
-        <h2 style={{ marginBottom: 10 }}>Scegli il servizio</h2>
-        <p style={{ marginBottom: 25, opacity: 0.7 }}>
+        <h2>Scegli il servizio</h2>
+        <p style={{ opacity: 0.7, fontSize: 14 }}>
           Seleziona il tipo di appuntamento
         </p>
 
         <button
+          style={buttonStyle}
           onClick={() => onSelect("taglio")}
-          style={{
-            width: "100%",
-            padding: "16px 0",
-            marginBottom: 15,
-            borderRadius: 10,
-            border: "2px solid #000",
-            background: "#fff",
-            fontSize: 16,
-            fontWeight: "bold",
-            cursor: "pointer",
-            transition: "all 0.2s",
-          }}
           onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "#f4c542")
+            (e.currentTarget.style.backgroundColor = "#f4c542")
           }
           onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "#fff")
+            (e.currentTarget.style.backgroundColor = "#fff")
           }
         >
           ✂️ Taglio
         </button>
 
         <button
+          style={buttonStyle}
           onClick={() => onSelect("taglio_barba")}
-          style={{
-            width: "100%",
-            padding: "16px 0",
-            borderRadius: 10,
-            border: "2px solid #000",
-            background: "#fff",
-            fontSize: 16,
-            fontWeight: "bold",
-            cursor: "pointer",
-            transition: "all 0.2s",
-          }}
           onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "#f4c542")
+            (e.currentTarget.style.backgroundColor = "#f4c542")
           }
           onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "#fff")
+            (e.currentTarget.style.backgroundColor = "#fff")
           }
         >
           ✂️🧔 Taglio + Barba
+        </button>
+
+        <button
+          type="button"
+          onClick={onBack}
+          style={backButtonStyle}
+        >
+          Indietro
         </button>
       </div>
     </div>
@@ -98,3 +97,4 @@ function ServiceSelect({ onSelect, onBack }) {
 }
 
 export default ServiceSelect;
+
