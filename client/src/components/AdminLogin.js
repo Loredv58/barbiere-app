@@ -80,7 +80,7 @@ function AdminLogin({ onLoginSuccess, onBack }) {
         }}
       >
         <h2 style={{ textAlign: "center", marginBottom: 10 }}>
-          Login Proprietario
+          Login Admin
         </h2>
 
         <input

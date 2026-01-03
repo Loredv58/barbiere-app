@@ -8,6 +8,25 @@ function UserLogin({ onLoginSuccess, onBack }) {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const inputStyle = {
+    padding: "12px",
+    fontSize: 15,
+    borderRadius: 8,
+    border: "1px solid #ccc",
+    width: "100%",
+    boxSizing: "border-box",
+  };
+
+  const buttonStyle = {
+    padding: "12px",
+    fontSize: 15,
+    borderRadius: 8,
+    border: "none",
+    fontWeight: "bold",
+    cursor: "pointer",
+    width: "100%",
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -27,78 +46,71 @@ function UserLogin({ onLoginSuccess, onBack }) {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        height: "100vh",
+        width: "100%",
         backgroundImage: "url('/barber-bg.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
         padding: 20,
       }}
     >
-      <div
+      <form
+        onSubmit={handleLogin}
         style={{
           background: "rgba(255,255,255,0.95)",
-          padding: 30,
+          padding: 24,
           borderRadius: 12,
           maxWidth: 400,
           width: "100%",
-          boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-          textAlign: "center",
+          boxShadow: "2px 2px 10px rgba(0,0,0,0.3)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
         }}
       >
-        <h2 style={{ marginBottom: 20 }}>Login Utente</h2>
-        <form onSubmit={handleLogin} style={{ display: "grid", gap: 15 }}>
-          <input
-            type="email"
-            placeholder="Inserisci la tua email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{
-              padding: 10,
-              borderRadius: 6,
-              border: "1px solid #ccc",
-              fontSize: 16,
-            }}
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: 12,
-              borderRadius: 6,
-              border: "none",
-              backgroundColor: "#f4c542",
-              color: "#000",
-              fontWeight: "bold",
-              fontSize: 16,
-              cursor: "pointer",
-            }}
-          >
-            {loading ? "Caricamento..." : "Accedi"}
-          </button>
-          <button
-            type="button"
-            onClick={onBack}
-            style={{
-              padding: 10,
-              borderRadius: 6,
-              border: "none",
-              backgroundColor: "#333",
-              color: "#fff",
-              fontWeight: "bold",
-              fontSize: 14,
-              cursor: "pointer",
-              marginTop: 5,
-            }}
-          >
-            Indietro
-          </button>
-        </form>
-        {error && <p style={{ color: "red", marginTop: 15 }}>{error}</p>}
-      </div>
+        <h2 style={{ textAlign: "center", marginBottom: 10 }}>
+          Login Utente
+        </h2>
+
+        <input
+          type="email"
+          placeholder="Inserisci la tua email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={inputStyle}
+        />
+
+        {error && <p style={{ color: "red", fontSize: 14 }}>{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            ...buttonStyle,
+            backgroundColor: "#f4c542",
+            color: "#000",
+            boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
+          }}
+        >
+          {loading ? "Caricamento..." : "Accedi"}
+        </button>
+
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            ...buttonStyle,
+            backgroundColor: "#333",
+            color: "#fff",
+          }}
+        >
+          Indietro
+        </button>
+      </form>
     </div>
   );
 }
