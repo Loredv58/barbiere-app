@@ -1,5 +1,20 @@
 import React, { useEffect, useState } from "react";
 
+/* 📅 Formattazione data per UI (italiano, leggibile) */
+function formatDateItalian(dateString) {
+  const date = new Date(dateString);
+
+  const formatted = date.toLocaleDateString("it-IT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  // Capitalizza prima lettera (Giovedì, Gennaio, ecc.)
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
 function SlotsList({
   selectedDate,
   onSelectSlot,
@@ -16,13 +31,12 @@ function SlotsList({
   useEffect(() => {
     if (!selectedDate) return;
 
-    // ✅ SLOT GIÀ IN CACHE → USALI SUBITO
+    // ✅ usa cache se disponibile
     if (slotsCache[selectedDate]) {
       setSlots(slotsCache[selectedDate]);
       return;
     }
 
-    // ❌ ALTRIMENTI FETCH (una sola volta)
     setLoading(true);
     setError("");
 
@@ -35,7 +49,6 @@ function SlotsList({
         const safeData = Array.isArray(data) ? data : [];
         setSlots(safeData);
 
-        // 🔹 salva in cache
         setSlotsCache((prev) => ({
           ...prev,
           [selectedDate]: safeData,
@@ -61,8 +74,8 @@ function SlotsList({
       <div
         style={{
           background: "rgba(255,255,255,0.96)",
-          padding: 20,
-          borderRadius: 14,
+          padding: 25,
+          borderRadius: 16,
           maxWidth: 420,
           width: "100%",
           boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
@@ -73,7 +86,7 @@ function SlotsList({
         <button
           onClick={onBack}
           style={{
-            marginBottom: 12,
+            marginBottom: 15,
             background: "#f4c542",
             border: "none",
             padding: "6px 14px",
@@ -85,14 +98,15 @@ function SlotsList({
           ← Indietro
         </button>
 
-        <h2 style={{ marginBottom: 15 }}>
-          Slot disponibili<br />
-          <small>{selectedDate}</small>
-        </h2>
+        {/* 📅 TITOLO */}
+        <h2 style={{ marginBottom: 6 }}>Slot disponibili</h2>
+        <p style={{ marginBottom: 20, opacity: 0.75 }}>
+          📅 {formatDateItalian(selectedDate)}
+        </p>
 
+        {/* ⏳ LOADING */}
         {loading && (
-          <div style={{ margin: "20px 0" }}>
-            {/* Spinner elegante */}
+          <div style={{ margin: "25px 0" }}>
             <div
               style={{
                 border: "4px solid #f3f3f3",
@@ -118,19 +132,22 @@ function SlotsList({
           </div>
         )}
 
+        {/* ❌ ERRORE */}
         {error && (
-          <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+          <p style={{ color: "red", marginBottom: 10 }}>{error}</p>
         )}
 
+        {/* 😕 NESSUNO SLOT */}
         {!loading && slots.length === 0 && (
-          <p style={{ textAlign: "center" }}>Nessuno slot disponibile</p>
+          <p style={{ opacity: 0.7 }}>Nessuno slot disponibile</p>
         )}
 
+        {/* 🕒 SLOT */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))",
-            gap: 10,
+            gap: 12,
             marginTop: 15,
           }}
         >
@@ -147,8 +164,12 @@ function SlotsList({
                 fontWeight: "bold",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#f4c542")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#f4c542")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "#fff")
+              }
             >
               {slot}
             </button>
@@ -160,3 +181,4 @@ function SlotsList({
 }
 
 export default SlotsList;
+
