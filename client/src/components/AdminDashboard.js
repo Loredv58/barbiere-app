@@ -77,7 +77,7 @@ function AdminDashboard({ onLogout }) {
 
   return (
     <div style={{ marginTop: "20px" }}>
-      <h2>Dashboard Proprietario</h2>
+      <h2>Dashboard Admin</h2>
 
       <div style={{ marginBottom: "15px" }}>
         <label>Seleziona giorno: </label>

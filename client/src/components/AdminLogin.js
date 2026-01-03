@@ -60,7 +60,7 @@ function AdminLogin({ onLoginSuccess, onCancel }) {
           gap: 10,
         }}
       >
-        <h2 style={{ textAlign: "center" }}>Login Proprietario</h2>
+        <h2 style={{ textAlign: "center" }}>Login Admin</h2>
 
         <input
           type="text"
@@ -112,7 +112,7 @@ function AdminLogin({ onLoginSuccess, onCancel }) {
             boxShadow: "2px 2px 6px rgba(0,0,0,0.3)",
           }}
         >
-          Torna indietro
+          Indietro
         </button>
       </form>
     </div>

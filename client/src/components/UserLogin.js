@@ -94,7 +94,7 @@ function UserLogin({ onLoginSuccess, onBack }) {
               marginTop: 5,
             }}
           >
-            Torna indietro
+            Indietro
           </button>
         </form>
         {error && <p style={{ color: "red", marginTop: 15 }}>{error}</p>}
